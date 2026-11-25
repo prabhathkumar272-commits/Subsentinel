@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block page_title %}Review Detected Subscriptions{% endblock %}
+
+{% block content %}
+<div class="py-8 px-4 max-w-7xl mx-auto">
+
+  <!-- Page Header -->
+  <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Review Detected Subscriptions</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-1">
+        {% if candidates %}
+          Found <span class="font-semibold text-indigo-600 dark:text-indigo-400">{{ candidates|length }}</span> potential recurring charge{{ candidates|length|pluralize }}
+        {% else %}
+          No recurring charges detected
+        {% endif %}
+      </p>
+    </div>
+    {% if candidates %}
+    <div class="flex items-center gap-3">
+      <!-- Bulk: Confirm All -->
+      <button
+        hx-post="{% url 'imports:bulk_confirm' upload.id %}"
+        hx-target="#candidates-table-body"
+        hx-swap="outerHTML"
+        hx-confirm="Confirm all detected subscriptions?"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
+      >
+        ✓ Confirm All
+      </button>
+      <!-- Bulk: Dismiss All -->
+      <button
+        hx-post="{% url 'imports:bulk_dismiss' upload.id %}"
+        hx-target="#candidates-table-body"
+        hx-swap="outerHTML"
+        hx-confirm="Dismiss all detected subscriptions?"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400"
+      >
+        ✗ Dismiss All
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if candidates %}
+  <!-- Candidates Table -->
+  <form method="post" id="review-form">
+    {% csrf_token %}
+    <div class="card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <tr>
+              <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Merchant</th>
+              <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Amount</th>
+              <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Interval</th>
+              <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Confidence</th>
+              <th class="text-center px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Txns</th>
+              <th class="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Next Expected</th>
+              <th class="text-right px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="candidates-table-body" class="divide-y divide-gray-100 dark:divide-gray-800">
+            {% for candidate in candidates %}
+            {% include "imports/partials/candidate_row.html" with candidate=candidate %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </form>
+
+  {% else %}
+  <!-- Empty State -->
+  <div class="card py-20 flex flex-col items-center justify-center text-center">
+    <div class="text-6xl mb-4">🔍</div>
+    <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">No recurring charges detected</h3>
+    <p class="text-gray-500 dark:text-gray-400 max-w-sm mb-6">
+      We couldn't find any recurring charges in this statement. Try uploading a file with more transaction history.
+    </p>
+    <a href="{% url 'imports:upload' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
+      ← Try Another File
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

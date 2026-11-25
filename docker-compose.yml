@@ -1,0 +1,106 @@
+# ---------------------------------------------------------------------------
+# SubSentinel – Docker Compose (development / staging)
+# ---------------------------------------------------------------------------
+version: "3.9"
+
+x-common-env: &common-env
+  DJANGO_SETTINGS_MODULE: config.settings.prod
+  SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+  DEBUG: "False"
+  ALLOWED_HOSTS: "localhost,127.0.0.1"
+  DB_NAME: subsentinel
+  DB_USER: postgres
+  DB_PASSWORD: postgres
+  DB_HOST: db
+  DB_PORT: "5432"
+  CELERY_BROKER_URL: redis://redis:6379/0
+  CELERY_RESULT_BACKEND: redis://redis:6379/0
+
+services:
+  # ---------- Web application ----------
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      <<: *common-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - static_data:/app/staticfiles
+      - media_data:/app/media
+    restart: unless-stopped
+
+  # ---------- PostgreSQL ----------
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: subsentinel
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ---------- Redis ----------
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ---------- Celery Worker ----------
+  celery-worker:
+    build: .
+    command: >
+      celery -A config worker
+      --loglevel=info
+      --concurrency=2
+      -Q default
+    environment:
+      <<: *common-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ---------- Celery Beat ----------
+  celery-beat:
+    build: .
+    command: >
+      celery -A config beat
+      --loglevel=info
+      --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    environment:
+      <<: *common-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_data:
+  media_data:

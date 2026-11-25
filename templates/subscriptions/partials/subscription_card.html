@@ -1,0 +1,127 @@
+{% load subscription_tags core_tags %}
+
+<div id="sub-card-{{ sub.id }}"
+     class="group relative bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden">
+  
+  <!-- Category top accent line -->
+  <div class="absolute top-0 left-0 right-0 h-1.5"
+       style="background-color: {{ sub.category.color|default:'#6366F1' }};"></div>
+
+  <!-- Card Top: Category, Trial Badge & Menu -->
+  <div>
+    <div class="flex items-center justify-between gap-2 mb-3 pt-1">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+          <span>{{ sub.category.icon|default:'📦' }}</span>
+          <span>{{ sub.category.name|default:'Uncategorized' }}</span>
+        </span>
+        {% if sub.is_trial %}
+          {% trial_badge sub %}
+        {% endif %}
+      </div>
+
+      <div class="flex items-center gap-1" id="sub-status-{{ sub.id }}">
+        {% status_badge sub %}
+      </div>
+    </div>
+
+    <!-- Title & Merchant -->
+    <div class="mb-4">
+      <h3 class="text-lg font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors flex items-center gap-2">
+        <a href="{% url 'subscriptions:detail' sub.pk %}" class="hover:underline">
+          {{ sub.name }}
+        </a>
+        {% if sub.website_url %}
+          <a href="{{ sub.website_url }}" target="_blank" rel="noopener" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" title="Visit website">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+            </svg>
+          </a>
+        {% endif %}
+      </h3>
+      {% if sub.payment_method %}
+        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+          </svg>
+          {{ sub.payment_method }}
+        </p>
+      {% endif %}
+    </div>
+
+    <!-- Amount and Cycle -->
+    <div class="flex items-baseline gap-1 mb-4">
+      <span class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        {{ sub.currency }} {{ sub.amount }}
+      </span>
+      <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+        / {{ sub.billing_cycle|format_billing_cycle|lower }}
+      </span>
+      {% if sub.billing_cycle != 'monthly' %}
+        <span class="text-[11px] text-slate-400 ml-1">
+          (~{{ sub.currency }} {{ sub.monthly_cost|floatformat:2 }}/mo)
+        </span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Card Bottom: Next Renewal info & Actions -->
+  <div class="pt-4 border-t border-slate-100 dark:border-slate-700/60 mt-auto">
+    <div class="flex items-center justify-between text-xs mb-3">
+      <span class="text-slate-500 dark:text-slate-400">Next renewal:</span>
+      <span class="font-semibold text-slate-800 dark:text-slate-200">
+        {{ sub.next_billing_date|date:"M d, Y" }}
+        <span class="text-xs font-normal text-slate-400 ml-0.5">({{ sub.days_until_billing }}d)</span>
+      </span>
+    </div>
+
+    <div class="flex items-center justify-between gap-1 pt-1">
+      <div class="flex items-center gap-1">
+        {% if sub.status == 'active' %}
+          <button type="button"
+                  hx-post="{% url 'subscriptions:pause' sub.pk %}"
+                  hx-target="#sub-status-{{ sub.id }}"
+                  hx-swap="innerHTML"
+                  class="px-2.5 py-1 text-xs font-medium rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors">
+            Pause
+          </button>
+        {% elif sub.status == 'paused' %}
+          <button type="button"
+                  hx-post="{% url 'subscriptions:resume' sub.pk %}"
+                  hx-target="#sub-status-{{ sub.id }}"
+                  hx-swap="innerHTML"
+                  class="px-2.5 py-1 text-xs font-medium rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors">
+            Resume
+          </button>
+        {% endif %}
+
+        {% if sub.status != 'cancelled' %}
+          <button type="button"
+                  hx-post="{% url 'subscriptions:cancel' sub.pk %}"
+                  hx-target="#sub-status-{{ sub.id }}"
+                  hx-swap="innerHTML"
+                  class="px-2 py-1 text-xs font-medium rounded-lg text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 transition-colors">
+            Cancel
+          </button>
+        {% endif %}
+      </div>
+
+      <div class="flex items-center gap-1">
+        <a href="{% url 'subscriptions:edit' sub.pk %}"
+           class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+           title="Edit subscription">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+          </svg>
+        </a>
+        <a href="{% url 'subscriptions:detail' sub.pk %}"
+           class="p-1.5 rounded-lg text-primary hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+           title="View details">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

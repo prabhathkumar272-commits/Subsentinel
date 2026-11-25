@@ -1,0 +1,211 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en"
+      x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }"
+      :class="{ 'dark': darkMode }"
+      class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block page_title %}SubSentinel{% endblock %}</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN with custom config -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary:  { DEFAULT: '#6366F1', 50: '#EEEEFF', 100: '#E0E0FD', 300: '#A5A6F9', 500: '#6366F1', 600: '#4145EE', 700: '#1F24EB', 800: '#1216C5' },
+            accent:   { DEFAULT: '#8B5CF6', 500: '#8B5CF6', 600: '#6D2FF4' },
+            success:  { DEFAULT: '#10B981' },
+            warning:  { DEFAULT: '#F59E0B' },
+            danger:   { DEFAULT: '#F43F5E' },
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.5s ease-out',
+            'slide-up': 'slideUp 0.5s ease-out',
+            'float': 'float 6s ease-in-out infinite',
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- HTMX -->
+  <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+
+  <!-- Alpine.js -->
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(28px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-12px); }
+    }
+    @keyframes pulse-ring {
+      0%   { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(99,102,241,0.5); }
+      70%  { transform: scale(1);    box-shadow: 0 0 0 14px rgba(99,102,241,0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(99,102,241,0); }
+    }
+
+    :root {
+      --primary: #6366F1;
+      --accent:  #8B5CF6;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+      margin: 0;
+    }
+
+    /* Animated gradient background */
+    .auth-bg {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 40%, #6366f1 70%, #8b5cf6 100%);
+      background-size: 300% 300%;
+      animation: gradientShift 10s ease infinite;
+    }
+    @keyframes gradientShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Glass card */
+    .auth-card {
+      background: rgba(255,255,255,0.97);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255,255,255,0.4);
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.1);
+    }
+    .dark .auth-card {
+      background: rgba(15,23,42,0.95);
+      border: 1px solid rgba(99,102,241,0.2);
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    }
+
+    /* Floating orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: 0.3;
+      animation: float 8s ease-in-out infinite;
+    }
+    .orb-1 { width: 300px; height: 300px; background: #818cf8; top: -80px; left: -80px; animation-delay: 0s; }
+    .orb-2 { width: 200px; height: 200px; background: #c084fc; bottom: 40px; right: -60px; animation-delay: 3s; }
+    .orb-3 { width: 150px; height: 150px; background: #34d399; top: 50%; left: 70%; animation-delay: 1.5s; }
+
+    /* Logo pulse */
+    .logo-icon { animation: pulse-ring 2.5s ease-out infinite; }
+
+    /* Form input focus */
+    input:focus { outline: none; box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 3px; }
+  </style>
+
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body class="h-full">
+  <div class="auth-bg min-h-screen flex flex-col items-center justify-center px-4 py-10 relative overflow-hidden">
+
+    <!-- Floating orbs -->
+    <div class="orb orb-1 pointer-events-none"></div>
+    <div class="orb orb-2 pointer-events-none"></div>
+    <div class="orb orb-3 pointer-events-none"></div>
+
+    <!-- Dark mode toggle (top-right) -->
+    <button @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode)"
+            class="fixed top-4 right-4 z-50 p-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm transition-all">
+      <svg x-show="!darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+      </svg>
+      <svg x-show="darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+      </svg>
+    </button>
+
+    <!-- Brand header -->
+    <div class="mb-8 text-center animate-[fadeIn_0.5s_ease-out]">
+      <a href="/" class="inline-flex flex-col items-center gap-3 group">
+        <!-- Logo icon -->
+        <div class="logo-icon w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30
+                    flex items-center justify-center shadow-2xl group-hover:scale-105 transition-transform">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+        </div>
+        <!-- Wordmark -->
+        <div>
+          <h1 class="text-3xl font-extrabold text-white tracking-tight leading-none">SubSentinel</h1>
+          <p class="text-indigo-200 text-sm mt-1 font-medium">Your subscription guardian</p>
+        </div>
+      </a>
+    </div>
+
+    <!-- Auth card -->
+    <div class="auth-card w-full max-w-md rounded-3xl px-8 py-10 animate-[slideUp_0.5s_ease-out]">
+      <div class="mb-6 text-center">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+          {% block auth_title %}Welcome to SubSentinel{% endblock %}
+        </h2>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+          {% block auth_subtitle %}{% endblock %}
+        </p>
+      </div>
+      {% block auth_form %}{% endblock %}
+    </div>
+
+    <div class="mt-6 text-center">
+      {% block auth_footer %}{% endblock %}
+    </div>
+
+    <!-- Back to home link -->
+    <div class="mt-6 text-center animate-[fadeIn_0.7s_ease-out]">
+      <a href="/"
+         class="inline-flex items-center gap-1.5 text-indigo-200 hover:text-white text-sm font-medium transition-colors group">
+        <svg class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Back to Home
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <p class="mt-8 text-indigo-300/70 text-xs text-center">
+      &copy; {% now "Y" %} SubSentinel &mdash; All rights reserved.
+    </p>
+  </div>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

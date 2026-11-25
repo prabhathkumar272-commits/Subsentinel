@@ -1,0 +1,557 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en"
+      x-data="{ darkMode: localStorage.getItem('darkMode') === 'true', sidebarOpen: false, userMenuOpen: false, notificationOpen: false }"
+      :class="{ 'dark': darkMode }"
+      class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block page_title %}SubSentinel{% endblock %} — SubSentinel</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN with custom config -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary:  { DEFAULT: '#6366F1', 50: '#EEEEFF', 100: '#E0E0FD', 200: '#C2C3FB', 300: '#A5A6F9', 400: '#8789F7', 500: '#6366F1', 600: '#4145EE', 700: '#1F24EB', 800: '#1216C5', 900: '#0D109B' },
+            accent:   { DEFAULT: '#8B5CF6', 50: '#F5F0FE', 100: '#EBE2FD', 200: '#D6C5FB', 300: '#C2A8FA', 400: '#AD8BF8', 500: '#8B5CF6', 600: '#6D2FF4', 700: '#5212E0', 800: '#3F0DAD', 900: '#2C097A' },
+            success:  { DEFAULT: '#10B981', 50: '#E8FBF4', 100: '#D1F7E9', 200: '#A3EFD3', 300: '#75E7BD', 400: '#47DFA7', 500: '#10B981', 600: '#0D9469', 700: '#0A6F4F', 800: '#074A35', 900: '#04251B' },
+            warning:  { DEFAULT: '#F59E0B', 50: '#FFF8E8', 100: '#FFF1D1', 200: '#FFE3A3', 300: '#FFD575', 400: '#FFC747', 500: '#F59E0B', 600: '#C37E09', 700: '#915E07', 800: '#5F3E05', 900: '#2D1E02' },
+            danger:   { DEFAULT: '#F43F5E', 50: '#FEE9ED', 100: '#FDD3DA', 200: '#FBA7B5', 300: '#F97B90', 400: '#F74F6B', 500: '#F43F5E', 600: '#F01038', 700: '#C00B2D', 800: '#900823', 900: '#600519' },
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.4s ease-out',
+            'slide-up': 'slideUp 0.4s ease-out',
+            'count-up': 'countUp 0.6s ease-out',
+          },
+        }
+      }
+    }
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- HTMX -->
+  <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+
+  <!-- Alpine.js -->
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* ── Keyframes ──────────────────────────────────────────── */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+    @keyframes countUp {
+      from { opacity: 0; transform: scale(0.8); }
+      to   { opacity: 1; transform: scale(1);   }
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(100%); }
+      to   { opacity: 1; transform: translateX(0);     }
+    }
+    @keyframes toastOut {
+      from { opacity: 1; transform: translateX(0);     }
+      to   { opacity: 0; transform: translateX(100%); }
+    }
+
+    /* ── CSS Custom Properties ──────────────────────────────── */
+    :root {
+      --primary:  #6366F1;
+      --accent:   #8B5CF6;
+      --success:  #10B981;
+      --warning:  #F59E0B;
+      --danger:   #F43F5E;
+      --sidebar-width: 16rem;
+      --transition: 0.25s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ── Base ───────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; }
+
+    /* ── Scrollbar ──────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+    .dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+    /* ── Sidebar ────────────────────────────────────────────── */
+    #sidebar {
+      transition: transform var(--transition), width var(--transition);
+      will-change: transform;
+    }
+
+    /* ── Glass card ─────────────────────────────────────────── */
+    .glass {
+      background: rgba(255,255,255,0.65);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    .dark .glass {
+      background: rgba(30,41,59,0.65);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    /* ── Nav links ──────────────────────────────────────────── */
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 1rem;
+      border-radius: 0.6rem;
+      font-weight: 500;
+      font-size: 0.875rem;
+      color: #64748b;
+      transition: background var(--transition), color var(--transition), transform 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .nav-link:hover {
+      background: rgba(99,102,241,0.08);
+      color: #6366F1;
+      transform: translateX(2px);
+    }
+    .nav-link.active {
+      background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1));
+      color: #6366F1;
+      font-weight: 600;
+    }
+    .nav-link.active::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 20%; bottom: 20%;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: linear-gradient(to bottom, #6366F1, #8B5CF6);
+    }
+    .dark .nav-link { color: #94a3b8; }
+    .dark .nav-link:hover { color: #a5b4fc; background: rgba(99,102,241,0.12); }
+    .dark .nav-link.active { color: #a5b4fc; background: rgba(99,102,241,0.2); }
+
+    /* ── Toast ──────────────────────────────────────────────── */
+    .toast { animation: toastIn 0.35s ease-out; }
+    .toast.hiding { animation: toastOut 0.35s ease-in forwards; }
+
+    /* ── Stat card count-up ─────────────────────────────────── */
+    .stat-value { animation: countUp 0.6s ease-out; }
+
+    /* ── Page content animation ─────────────────────────────── */
+    main > * { animation: slideUp 0.4s ease-out; }
+
+    /* ── Bottom nav active ──────────────────────────────────── */
+    .bottom-nav-link.active svg, .bottom-nav-link.active span {
+      color: #6366F1;
+    }
+  </style>
+
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body class="h-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 transition-colors duration-300">
+
+  <!-- CSRF token for HTMX -->
+  {% csrf_token %}
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TOAST NOTIFICATIONS (Django messages)
+  ═══════════════════════════════════════════════════════════ -->
+  {% if messages %}
+  <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-3 w-80 max-w-full">
+    {% for message in messages %}
+    <div class="toast flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg
+      {% if message.tags == 'error' or message.tags == 'danger' %}bg-danger text-white
+      {% elif message.tags == 'success' %}bg-success text-white
+      {% elif message.tags == 'warning' %}bg-warning text-slate-900
+      {% else %}bg-primary text-white{% endif %}
+      "
+      x-data="{ show: true }"
+      x-show="show"
+      x-init="setTimeout(() => { $el.classList.add('hiding'); setTimeout(() => show = false, 350); }, 5000)"
+    >
+      <span class="text-xl leading-none mt-0.5">
+        {% if message.tags == 'error' or message.tags == 'danger' %}⚠️
+        {% elif message.tags == 'success' %}✅
+        {% elif message.tags == 'warning' %}⚡
+        {% else %}ℹ️{% endif %}
+      </span>
+      <p class="text-sm font-medium flex-1">{{ message }}</p>
+      <button @click="$el.parentElement.classList.add('hiding'); setTimeout(() => show = false, 350)"
+              class="ml-auto opacity-70 hover:opacity-100 text-lg leading-none">×</button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ═══════════════════════════════════════════════════════════
+       WRAPPER
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="flex h-full min-h-screen">
+
+    <!-- ── SIDEBAR OVERLAY (mobile) ───────────────────────── -->
+    <div x-show="sidebarOpen"
+         x-transition:enter="transition-opacity duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition-opacity duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click="sidebarOpen = false"
+         class="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 lg:hidden"
+         style="display:none;">
+    </div>
+
+    <!-- ── SIDEBAR ──────────────────────────────────────────── -->
+    <aside id="sidebar"
+           :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+           class="fixed top-0 left-0 h-full w-64 z-40 flex flex-col
+                  bg-white dark:bg-slate-800
+                  border-r border-slate-200 dark:border-slate-700
+                  shadow-xl lg:shadow-none
+                  transition-transform duration-300">
+
+      <!-- Brand -->
+      <div class="flex items-center gap-3 px-5 py-5 border-b border-slate-200 dark:border-slate-700">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
+          <span class="text-white font-bold text-sm">SS</span>
+        </div>
+        <div>
+          <span class="font-bold text-slate-800 dark:text-slate-100 text-base tracking-tight">SubSentinel</span>
+          <p class="text-xs text-slate-400 dark:text-slate-500 leading-none">Subscription Manager</p>
+        </div>
+        <!-- Close btn (mobile) -->
+        <button @click="sidebarOpen = false"
+                class="ml-auto p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 lg:hidden">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Nav links -->
+      <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        {% url 'dashboard' as url_dashboard %}
+        {% url 'subscription_list' as url_subs %}
+        {% url 'import_upload' as url_import %}
+        {% url 'insights_calendar' as url_insights %}
+        {% url 'notification_list' as url_notifs %}
+
+        <a href="/dashboard/"
+           class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}">
+          <span class="text-xl w-6 text-center">🏠</span>
+          <span>Dashboard</span>
+        </a>
+
+        <a href="/subscriptions/"
+           class="nav-link {% if '/subscriptions/' in request.path %}active{% endif %}">
+          <span class="text-xl w-6 text-center">💳</span>
+          <span>Subscriptions</span>
+        </a>
+
+        <a href="/imports/upload/"
+           class="nav-link {% if '/imports/' in request.path %}active{% endif %}">
+          <span class="text-xl w-6 text-center">📂</span>
+          <span>Import CSV</span>
+        </a>
+
+        <a href="/insights/calendar/"
+           class="nav-link {% if '/insights/' in request.path %}active{% endif %}">
+          <span class="text-xl w-6 text-center">💡</span>
+          <span>Insights</span>
+        </a>
+
+        <a href="/notifications/"
+           class="nav-link {% if '/notifications/' in request.path %}active{% endif %}">
+          <span class="text-xl w-6 text-center">🔔</span>
+          <span>Notifications</span>
+          {% if unread_notification_count and unread_notification_count > 0 %}
+          <span class="ml-auto inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs font-bold bg-danger text-white rounded-full">
+            {{ unread_notification_count }}
+          </span>
+          {% endif %}
+        </a>
+      </nav>
+
+      <!-- Sidebar footer -->
+      <div class="px-4 py-4 border-t border-slate-200 dark:border-slate-700">
+        {% if request.user.is_authenticated %}
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+            {{ request.user.first_name|default:request.user.email|default:"U"|first|upper }}
+          </div>
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{{ request.user.get_full_name|default:request.user.email }}</p>
+            <p class="text-xs text-slate-400 dark:text-slate-500 truncate">{{ request.user.email }}</p>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </aside>
+
+    <!-- ── MAIN COLUMN ─────────────────────────────────────── -->
+    <div class="flex-1 flex flex-col min-h-screen lg:ml-64 transition-all duration-300">
+
+      <!-- ── TOP NAVBAR ──────────────────────────────────────── -->
+      <header class="sticky top-0 z-20 flex items-center gap-4 px-4 md:px-6 py-3
+                     bg-white/80 dark:bg-slate-800/80
+                     backdrop-blur-md
+                     border-b border-slate-200 dark:border-slate-700
+                     shadow-sm">
+
+        <!-- Hamburger (mobile) -->
+        <button @click="sidebarOpen = !sidebarOpen"
+                class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 lg:hidden transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+
+        <!-- Page title -->
+        <h1 class="text-lg font-bold text-slate-800 dark:text-slate-100 flex-1 truncate">
+          {% block page_title_header %}SubSentinel{% endblock %}
+        </h1>
+
+        <!-- Right controls -->
+        <div class="flex items-center gap-2">
+
+          <!-- Dark mode toggle -->
+          <button @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode)"
+                  class="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                  :title="darkMode ? 'Switch to light mode' : 'Switch to dark mode'">
+            <svg x-show="!darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+            <svg x-show="darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+          </button>
+
+          <!-- Notification Bell -->
+          <div class="relative" x-data="{ open: false }">
+            <button @click="open = !open"
+                    hx-get="/notifications/dropdown/"
+                    hx-trigger="click"
+                    hx-target="#notification-dropdown"
+                    hx-swap="innerHTML"
+                    class="relative p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+              </svg>
+              {% if unread_notification_count and unread_notification_count > 0 %}
+              <span class="absolute top-1 right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-danger text-white rounded-full leading-none">
+                {{ unread_notification_count|default:"" }}
+              </span>
+              {% endif %}
+            </button>
+            <!-- Dropdown -->
+            <div x-show="open"
+                 @click.outside="open = false"
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 scale-95 translate-y-1"
+                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 scale-95 translate-y-1"
+                 style="display:none;"
+                 class="absolute right-0 mt-2 w-80 origin-top-right rounded-2xl bg-white dark:bg-slate-800 shadow-xl ring-1 ring-slate-200 dark:ring-slate-700 overflow-hidden z-50">
+              <div id="notification-dropdown" class="p-3 text-sm text-slate-500 dark:text-slate-400">
+                <div class="flex items-center justify-center py-6">
+                  <svg class="w-5 h-5 mr-2 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                  </svg>
+                  Loading…
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- User avatar + dropdown -->
+          <div class="relative" x-data="{ open: false }">
+            <button @click="open = !open"
+                    class="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+              <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                {{ request.user.first_name|default:request.user.email|default:"U"|first|upper }}
+              </div>
+              <span class="text-sm font-medium text-slate-700 dark:text-slate-200 hidden md:block max-w-[100px] truncate">
+                {{ request.user.get_full_name|default:request.user.email|default:"User" }}
+              </span>
+              <svg class="w-4 h-4 text-slate-400 hidden md:block transition-transform duration-200"
+                   :class="open ? 'rotate-180' : ''"
+                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+
+            <div x-show="open"
+                 @click.outside="open = false"
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 scale-95 translate-y-1"
+                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 scale-95 translate-y-1"
+                 style="display:none;"
+                 class="absolute right-0 mt-2 w-52 origin-top-right rounded-2xl bg-white dark:bg-slate-800 shadow-xl ring-1 ring-slate-200 dark:ring-slate-700 overflow-hidden z-50 py-1">
+
+              <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-700">
+                <p class="text-xs text-slate-400 dark:text-slate-500">Signed in as</p>
+                <p class="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{{ request.user.username }}</p>
+              </div>
+
+              <a href="/accounts/profile/"
+                 class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+                Profile
+              </a>
+
+              <div class="border-t border-slate-100 dark:border-slate-700 mt-1">
+                <a href="/accounts/logout/"
+                   class="flex items-center gap-2 px-4 py-2.5 text-sm text-danger hover:bg-danger/5 transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                  </svg>
+                  Sign Out
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ── MAIN CONTENT ──────────────────────────────────── -->
+      <main class="flex-1 px-4 md:px-6 py-6 pb-24 lg:pb-6 overflow-x-hidden">
+        {% block content %}{% endblock %}
+      </main>
+
+      <!-- ── MOBILE BOTTOM NAV ─────────────────────────────── -->
+      <nav class="fixed bottom-0 left-0 right-0 z-30 lg:hidden
+                  bg-white/90 dark:bg-slate-800/90
+                  backdrop-blur-md
+                  border-t border-slate-200 dark:border-slate-700
+                  flex items-center justify-around px-2 py-2 safe-area-pb">
+
+        <a href="/dashboard/"
+           class="bottom-nav-link flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-colors
+                  {% if request.path == '/dashboard/' %}active text-primary{% else %}text-slate-400 dark:text-slate-500{% endif %}">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+          </svg>
+          <span class="text-[10px] font-medium">Home</span>
+        </a>
+
+        <a href="/subscriptions/"
+           class="bottom-nav-link flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-colors
+                  {% if '/subscriptions/' in request.path %}active text-primary{% else %}text-slate-400 dark:text-slate-500{% endif %}">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+          </svg>
+          <span class="text-[10px] font-medium">Subs</span>
+        </a>
+
+        <a href="/imports/upload/"
+           class="bottom-nav-link flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-colors
+                  {% if '/imports/' in request.path %}active text-primary{% else %}text-slate-400 dark:text-slate-500{% endif %}">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          <span class="text-[10px] font-medium">Import</span>
+        </a>
+
+        <a href="/insights/calendar/"
+           class="bottom-nav-link flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-colors
+                  {% if '/insights/' in request.path %}active text-primary{% else %}text-slate-400 dark:text-slate-500{% endif %}">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+          </svg>
+          <span class="text-[10px] font-medium">Insights</span>
+        </a>
+
+        <a href="/notifications/"
+           class="bottom-nav-link flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-colors relative
+                  {% if '/notifications/' in request.path %}active text-primary{% else %}text-slate-400 dark:text-slate-500{% endif %}">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+          {% if unread_notification_count and unread_notification_count > 0 %}
+          <span class="absolute top-0.5 right-2 w-2.5 h-2.5 bg-danger rounded-full border-2 border-white dark:border-slate-800"></span>
+          {% endif %}
+          <span class="text-[10px] font-medium">Alerts</span>
+        </a>
+      </nav>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       GLOBAL SCRIPTS
+  ═══════════════════════════════════════════════════════════ -->
+  <script>
+    /* ── CSRF helpers ─────────────────────────────────────── */
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+          cookie = cookie.trim();
+          if (cookie.startsWith(name + '=')) {
+            cookieValue = decodeURIComponent(cookie.slice(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    /* ── HTMX CSRF injection ──────────────────────────────── */
+    document.body.addEventListener('htmx:configRequest', function (evt) {
+      evt.detail.headers['X-CSRFToken'] =
+        document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+        getCookie('csrftoken');
+    });
+
+    /* ── Toast auto-dismiss fallback (non-Alpine) ─────────── */
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('.toast').forEach(function (toast) {
+        setTimeout(function () {
+          toast.classList.add('hiding');
+          setTimeout(function () { toast.remove(); }, 350);
+        }, 5000);
+      });
+    });
+  </script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

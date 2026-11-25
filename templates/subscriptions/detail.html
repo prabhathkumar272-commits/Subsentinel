@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% load subscription_tags core_tags %}
+
+{% block page_title %}{{ subscription.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+  <!-- Back Link & Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <a href="{% url 'subscriptions:list' %}" class="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white mb-2 transition-colors">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to Subscriptions
+      </a>
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-sm"
+             style="background-color: {{ subscription.category.color|default:'#6366F1' }}20;">
+          {{ subscription.category.icon|default:'📦' }}
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            {{ subscription.name }}
+            {% if subscription.website_url %}
+              <a href="{{ subscription.website_url }}" target="_blank" rel="noopener" class="text-slate-400 hover:text-primary" title="Visit website">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
+              </a>
+            {% endif %}
+          </h1>
+          <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+            Category: {{ subscription.category.name|default:'Uncategorized' }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex items-center gap-2">
+      <a href="{% url 'subscriptions:edit' subscription.pk %}"
+         class="inline-flex items-center px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 shadow-sm transition-colors">
+        <svg class="w-4 h-4 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+        </svg>
+        Edit
+      </a>
+      <a href="{% url 'subscriptions:delete' subscription.pk %}"
+         class="inline-flex items-center px-3.5 py-2 rounded-xl text-sm font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+        Delete
+      </a>
+    </div>
+  </div>
+
+  <!-- Subscription Summary Card -->
+  <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm overflow-hidden">
+    <!-- Top Price Banner -->
+    <div class="p-6 sm:p-8 bg-gradient-to-r from-slate-50 to-white dark:from-slate-800/80 dark:to-slate-800 border-b border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <p class="text-xs uppercase font-bold tracking-wider text-slate-400">Subscription Cost</p>
+        <div class="flex items-baseline gap-2 mt-1">
+          <span class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white">
+            {{ subscription.currency }} {{ subscription.amount }}
+          </span>
+          <span class="text-sm text-slate-500 dark:text-slate-400 font-medium">
+            per {{ subscription.billing_cycle|format_billing_cycle|lower }}
+          </span>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          Estimated: <span class="font-medium text-slate-700 dark:text-slate-300">{{ subscription.currency }} {{ subscription.monthly_cost|floatformat:2 }}/mo</span>
+          &bull; <span class="font-medium text-slate-700 dark:text-slate-300">{{ subscription.currency }} {{ subscription.yearly_cost|floatformat:2 }}/yr</span>
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        {% status_badge subscription %}
+        {% if subscription.is_trial %}
+          {% trial_badge subscription %}
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Metadata Grid -->
+    <div class="p-6 sm:p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+      <div>
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Next Billing Date</p>
+        <p class="font-semibold text-slate-800 dark:text-slate-200 text-base">
+          {{ subscription.next_billing_date|date:"F d, Y" }}
+        </p>
+        <p class="text-xs text-slate-500 mt-0.5">
+          in {{ subscription.days_until_billing }} days
+        </p>
+      </div>
+
+      <div>
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Start Date</p>
+        <p class="font-semibold text-slate-800 dark:text-slate-200 text-base">
+          {{ subscription.start_date|date:"F d, Y" }}
+        </p>
+      </div>
+
+      <div>
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Billing Interval</p>
+        <p class="font-semibold text-slate-800 dark:text-slate-200 text-base capitalize">
+          {{ subscription.billing_cycle|format_billing_cycle }}
+        </p>
+      </div>
+
+      {% if subscription.is_trial %}
+        <div>
+          <p class="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1">Trial End Date</p>
+          <p class="font-semibold text-amber-700 dark:text-amber-300 text-base">
+            {{ subscription.trial_end_date|date:"F d, Y" }}
+          </p>
+          <p class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+            {{ subscription.trial_days_remaining }} days remaining
+          </p>
+        </div>
+      {% endif %}
+
+      <div>
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Payment Method</p>
+        <p class="font-semibold text-slate-800 dark:text-slate-200 text-base">
+          {{ subscription.payment_method|default:"Not specified" }}
+        </p>
+      </div>
+
+      <div>
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Reminder Setting</p>
+        <p class="font-semibold text-slate-800 dark:text-slate-200 text-base">
+          {{ subscription.reminder_days_before }} days before
+        </p>
+      </div>
+    </div>
+
+    <!-- Notes if any -->
+    {% if subscription.notes %}
+      <div class="px-6 sm:px-8 pb-6 border-t border-slate-100 dark:border-slate-700/60 pt-4">
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Notes</p>
+        <p class="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-line bg-slate-50 dark:bg-slate-900/40 p-4 rounded-xl">
+          {{ subscription.notes }}
+        </p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Payment History Table -->
+  <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm overflow-hidden">
+    <div class="p-5 border-b border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+      <h2 class="text-base font-bold text-slate-900 dark:text-white">Payment History</h2>
+      <span class="text-xs text-slate-500 dark:text-slate-400">
+        {{ subscription.payment_records.count }} recorded payments
+      </span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead>
+          <tr class="border-b border-slate-100 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-900/30 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <th class="py-3 px-6">Date</th>
+            <th class="py-3 px-6">Amount</th>
+            <th class="py-3 px-6">Notes</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-700/60">
+          {% for record in subscription.payment_records.all %}
+            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/20 transition-colors">
+              <td class="py-3 px-6 font-medium text-slate-800 dark:text-slate-200">
+                {{ record.date|date:"M d, Y" }}
+              </td>
+              <td class="py-3 px-6 font-semibold text-slate-900 dark:text-white">
+                {{ subscription.currency }} {{ record.amount }}
+              </td>
+              <td class="py-3 px-6 text-slate-500 dark:text-slate-400">
+                {{ record.notes|default:"Automatic recurring billing" }}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="3" class="py-8 text-center text-slate-400">
+                No past payment records found for this subscription.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

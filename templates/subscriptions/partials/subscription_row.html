@@ -1,0 +1,96 @@
+{% load subscription_tags core_tags %}
+
+<tr id="sub-row-{{ sub.id }}" class="hover:bg-slate-50/70 dark:hover:bg-slate-700/30 transition-colors">
+  <!-- Subscription Name -->
+  <td class="py-3.5 px-4 pl-6">
+    <div class="flex items-center gap-3">
+      <div class="w-2.5 h-2.5 rounded-full flex-shrink-0"
+           style="background-color: {{ sub.category.color|default:'#6366F1' }};"></div>
+      <div>
+        <a href="{% url 'subscriptions:detail' sub.pk %}"
+           class="font-semibold text-slate-900 dark:text-white hover:text-primary transition-colors">
+          {{ sub.name }}
+        </a>
+        {% if sub.payment_method %}
+          <p class="text-xs text-slate-400 dark:text-slate-500">{{ sub.payment_method }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </td>
+
+  <!-- Category -->
+  <td class="py-3.5 px-4">
+    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+      <span>{{ sub.category.icon|default:'📦' }}</span>
+      <span>{{ sub.category.name|default:'Other' }}</span>
+    </span>
+  </td>
+
+  <!-- Cost -->
+  <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+    {{ sub.currency }} {{ sub.amount }}
+    {% if sub.billing_cycle != 'monthly' %}
+      <span class="block text-xs font-normal text-slate-400">
+        {{ sub.currency }} {{ sub.monthly_cost|floatformat:2 }}/mo
+      </span>
+    {% endif %}
+  </td>
+
+  <!-- Billing Cycle -->
+  <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400 capitalize">
+    {{ sub.billing_cycle|format_billing_cycle }}
+  </td>
+
+  <!-- Next Renewal -->
+  <td class="py-3.5 px-4 whitespace-nowrap">
+    <span class="font-medium text-slate-800 dark:text-slate-200">
+      {{ sub.next_billing_date|date:"M d, Y" }}
+    </span>
+    <span class="block text-xs text-slate-400">
+      in {{ sub.days_until_billing }} days
+    </span>
+  </td>
+
+  <!-- Status & Trial -->
+  <td class="py-3.5 px-4">
+    <div class="flex items-center gap-1.5" id="sub-row-status-{{ sub.id }}">
+      {% status_badge sub %}
+      {% if sub.is_trial %}
+        {% trial_badge sub %}
+      {% endif %}
+    </div>
+  </td>
+
+  <!-- Actions -->
+  <td class="py-3.5 px-4 text-right pr-6 whitespace-nowrap">
+    <div class="flex items-center justify-end gap-2">
+      {% if sub.status == 'active' %}
+        <button type="button"
+                hx-post="{% url 'subscriptions:pause' sub.pk %}"
+                hx-target="#sub-row-status-{{ sub.id }}"
+                hx-swap="innerHTML"
+                class="text-xs text-amber-600 hover:text-amber-700 font-medium">
+          Pause
+        </button>
+      {% elif sub.status == 'paused' %}
+        <button type="button"
+                hx-post="{% url 'subscriptions:resume' sub.pk %}"
+                hx-target="#sub-row-status-{{ sub.id }}"
+                hx-swap="innerHTML"
+                class="text-xs text-emerald-600 hover:text-emerald-700 font-medium">
+          Resume
+        </button>
+      {% endif %}
+
+      <a href="{% url 'subscriptions:edit' sub.pk %}"
+         class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+        Edit
+      </a>
+
+      <a href="{% url 'subscriptions:detail' sub.pk %}"
+         class="text-primary hover:text-primary-600 font-medium">
+        Details &rarr;
+      </a>
+    </div>
+  </td>
+</tr>

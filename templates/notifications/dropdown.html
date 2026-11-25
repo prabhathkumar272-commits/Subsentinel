@@ -1,0 +1,77 @@
+<!-- Notification Dropdown Panel (partial — no extends) -->
+<div
+  id="notification-dropdown"
+  class="w-80 sm:w-96 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl overflow-hidden"
+>
+  <!-- Header -->
+  <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60">
+    <h2 class="font-semibold text-gray-900 dark:text-white text-sm">Notifications</h2>
+    <button
+      hx-post="{% url 'notifications:mark_all_read' %}"
+      hx-target="#notification-dropdown"
+      hx-swap="innerHTML"
+      class="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 font-medium transition-colors"
+    >
+      Mark all read
+    </button>
+  </div>
+
+  <!-- Notification List -->
+  <ul class="max-h-[400px] overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
+    {% for notification in notifications|slice:":10" %}
+    <li
+      hx-post="{% url 'notifications:mark_read' notification.id %}"
+      hx-trigger="click"
+      hx-swap="none"
+      hx-on::after-request="window.location.href='{{ notification.link }}'"
+      class="
+        flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors
+        hover:bg-gray-50 dark:hover:bg-gray-800/50
+        {% if not notification.is_read %}border-l-2 border-indigo-500 bg-indigo-50/40 dark:bg-indigo-900/10{% else %}border-l-2 border-transparent{% endif %}
+      "
+    >
+      <!-- Type Icon -->
+      <div class="flex-shrink-0 mt-0.5 text-lg">
+        {% if notification.type == 'renewal' %}🔔
+        {% elif notification.type == 'trial' %}⏳
+        {% elif notification.type == 'price_change' %}💲
+        {% elif notification.type == 'payment_failed' %}❌
+        {% elif notification.type == 'new_subscription' %}🆕
+        {% else %}📣
+        {% endif %}
+      </div>
+
+      <!-- Content -->
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold text-gray-900 dark:text-white leading-tight">{{ notification.title }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{{ notification.message }}</p>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ notification.created_at|timesince }} ago</p>
+      </div>
+
+      <!-- Unread dot -->
+      {% if not notification.is_read %}
+      <div class="flex-shrink-0 mt-1.5">
+        <span class="inline-block w-2 h-2 bg-indigo-500 rounded-full"></span>
+      </div>
+      {% endif %}
+    </li>
+    {% empty %}
+    <!-- Empty State -->
+    <li class="flex flex-col items-center justify-center py-12 text-center px-4">
+      <span class="text-4xl mb-3">🔕</span>
+      <p class="text-sm font-medium text-gray-600 dark:text-gray-400">No notifications yet</p>
+      <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">We'll let you know when something needs attention</p>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <!-- Footer -->
+  <div class="px-4 py-2.5 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+    <a
+      href="/notifications/"
+      class="block text-center text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 font-medium transition-colors"
+    >
+      View all notifications →
+    </a>
+  </div>
+</div>

@@ -1,0 +1,41 @@
+{% extends "base_auth.html" %}
+
+{% block page_title %}404 – Page Not Found{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex flex-col items-center justify-center px-4 py-16 text-center">
+
+  <!-- Illustration / Number -->
+  <div class="relative mb-8 select-none">
+    <span class="text-[8rem] sm:text-[12rem] font-black text-gray-100 dark:text-gray-800 leading-none">404</span>
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-5xl">🔭</span>
+    </div>
+  </div>
+
+  <!-- Heading -->
+  <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-3">
+    Page Not Found
+  </h1>
+  <p class="text-gray-500 dark:text-gray-400 max-w-md mb-8 text-base sm:text-lg">
+    We looked everywhere but couldn't find the page you're looking for. It may have been moved, deleted, or the URL might be incorrect.
+  </p>
+
+  <!-- Actions -->
+  <div class="flex flex-col sm:flex-row items-center gap-3">
+    <a
+      href="/"
+      class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors shadow-sm"
+    >
+      🏠 Go Home
+    </a>
+    <button
+      onclick="history.back()"
+      class="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl transition-colors"
+    >
+      ← Go Back
+    </button>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base_auth.html" %}
+
+{% block page_title %}500 – Server Error{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex flex-col items-center justify-center px-4 py-16 text-center">
+
+  <!-- Illustration / Number -->
+  <div class="relative mb-8 select-none">
+    <span class="text-[8rem] sm:text-[12rem] font-black text-gray-100 dark:text-gray-800 leading-none">500</span>
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-5xl">⚙️</span>
+    </div>
+  </div>
+
+  <!-- Heading -->
+  <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-3">
+    Internal Server Error
+  </h1>
+  <p class="text-gray-500 dark:text-gray-400 max-w-md mb-2 text-base sm:text-lg">
+    Something went wrong on our end. Our team has been notified and is working on a fix.
+  </p>
+  <p class="text-gray-400 dark:text-gray-500 text-sm mb-8">
+    Please try again in a few minutes.
+  </p>
+
+  <!-- Actions -->
+  <div class="flex flex-col sm:flex-row items-center gap-3">
+    <a
+      href="/"
+      class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors shadow-sm"
+    >
+      🏠 Go Home
+    </a>
+    <button
+      onclick="location.reload()"
+      class="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl transition-colors"
+    >
+      ↻ Try Again
+    </button>
+  </div>
+
+  <!-- Status note -->
+  <p class="mt-10 text-xs text-gray-400 dark:text-gray-600">
+    Error reference: 500 · If this keeps happening, <a href="mailto:support@subsentinel.app" class="underline hover:text-gray-600 dark:hover:text-gray-400">contact support</a>
+  </p>
+
+</div>
+{% endblock %}

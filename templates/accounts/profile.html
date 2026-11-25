@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+
+{% block page_title %}Profile &amp; Settings{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+  <!-- Page Header -->
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Profile &amp; Settings</h1>
+    <p class="mt-1 text-sm text-gray-500">Manage your personal information and account preferences.</p>
+  </div>
+
+  {% if messages %}
+    <div class="mb-6 space-y-2">
+      {% for message in messages %}
+        <div class="flex items-center gap-3 rounded-lg px-4 py-3 {% if 'success' in message.tags %}bg-green-50 border border-green-200 text-green-800{% elif 'error' in message.tags %}bg-red-50 border border-red-200 text-red-800{% else %}bg-blue-50 border border-blue-200 text-blue-800{% endif %}">
+          {% if 'success' in message.tags %}
+            <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+          {% elif 'error' in message.tags %}
+            <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+          {% endif %}
+          <p class="text-sm font-medium">{{ message }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+    <!-- LEFT COLUMN: Profile Info -->
+    <div class="space-y-6">
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <!-- Card Header -->
+        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+          <div class="flex items-center gap-3">
+            <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-indigo-100 flex items-center justify-center">
+              <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-sm font-semibold text-gray-900">Personal Information</h2>
+              <p class="text-xs text-gray-500">Update your name and email address</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile Form -->
+        <form method="post" action="{% url 'accounts:profile' %}" novalidate class="px-6 py-5 space-y-4">
+          {% csrf_token %}
+          <input type="hidden" name="form_type" value="profile">
+
+          <!-- Avatar placeholder -->
+          <div class="flex items-center gap-4 pb-2">
+            <div class="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-xl font-bold uppercase shadow-sm">
+              {{ request.user.first_name|first|default:request.user.email|first }}{{ request.user.last_name|first }}
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-900">{{ request.user.get_full_name|default:request.user.email }}</p>
+              <p class="text-xs text-gray-500">{{ request.user.email }}</p>
+            </div>
+          </div>
+
+          <!-- First Name -->
+          <div>
+            <label for="{{ profile_form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">First name</label>
+            <input
+              type="text"
+              name="{{ profile_form.first_name.html_name }}"
+              id="{{ profile_form.first_name.id_for_label }}"
+              value="{{ profile_form.first_name.value|default:'' }}"
+              autocomplete="given-name"
+              class="w-full px-3 py-2.5 rounded-lg border {% if profile_form.first_name.errors %}border-red-400 bg-red-50{% else %}border-gray-300{% endif %} text-gray-900 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+            />
+            {% if profile_form.first_name.errors %}
+              <p class="mt-1 text-xs text-red-600">{{ profile_form.first_name.errors|join:", " }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Last Name -->
+          <div>
+            <label for="{{ profile_form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Last name</label>
+            <input
+              type="text"
+              name="{{ profile_form.last_name.html_name }}"
+              id="{{ profile_form.last_name.id_for_label }}"
+              value="{{ profile_form.last_name.value|default:'' }}"
+              autocomplete="family-name"
+              class="w-full px-3 py-2.5 rounded-lg border {% if profile_form.last_name.errors %}border-red-400 bg-red-50{% else %}border-gray-300{% endif %} text-gray-900 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+            />
+            {% if profile_form.last_name.errors %}
+              <p class="mt-1 text-xs text-red-600">{{ profile_form.last_name.errors|join:", " }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label for="{{ profile_form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Email address</label>
+            <input
+              type="email"
+              name="{{ profile_form.email.html_name }}"
+              id="{{ profile_form.email.id_for_label }}"
+              value="{{ profile_form.email.value|default:'' }}"
+              autocomplete="email"
+              class="w-full px-3 py-2.5 rounded-lg border {% if profile_form.email.errors %}border-red-400 bg-red-50{% else %}border-gray-300{% endif %} text-gray-900 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+            />
+            {% if profile_form.email.errors %}
+              <p class="mt-1 text-xs text-red-600">{{ profile_form.email.errors|join:", " }}</p>
+            {% endif %}
+          </div>
+
+          <div class="pt-2">
+            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              Save Profile
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Change Password -->
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+          <div class="flex items-center gap-3">
+            <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center">
+              <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-sm font-semibold text-gray-900">Password</h2>
+              <p class="text-xs text-gray-500">Keep your account secure</p>
+            </div>
+          </div>
+        </div>
+        <div class="px-6 py-5">
+          <p class="text-sm text-gray-600 mb-4">Use a strong, unique password to protect your account. We recommend at least 12 characters.</p>
+          <a
+            href="{% url 'accounts:password_change' %}"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium shadow-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          >
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+            </svg>
+            Change Password
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Settings -->
+    <div>
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+          <div class="flex items-center gap-3">
+            <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center">
+              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-sm font-semibold text-gray-900">Account Settings</h2>
+              <p class="text-xs text-gray-500">Customize your experience</p>
+            </div>
+          </div>
+        </div>
+
+        <form method="post" action="{% url 'accounts:profile' %}" novalidate class="px-6 py-5 space-y-5">
+          {% csrf_token %}
+          <input type="hidden" name="form_type" value="settings">
+
+          <!-- Default Currency -->
+          <div>
+            <label for="{{ settings_form.default_currency.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+              Default currency
+            </label>
+            <select
+              name="{{ settings_form.default_currency.html_name }}"
+              id="{{ settings_form.default_currency.id_for_label }}"
+              class="w-full px-3 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition appearance-none cursor-pointer"
+            >
+              {% for value, label in settings_form.default_currency.field.choices %}
+                <option value="{{ value }}" {% if settings_form.default_currency.value == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            {% if settings_form.default_currency.errors %}
+              <p class="mt-1 text-xs text-red-600">{{ settings_form.default_currency.errors|join:", " }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Reminder Days -->
+          <div>
+            <label for="{{ settings_form.default_reminder_days.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+              Default reminder
+              <span class="text-gray-400 font-normal">(days before billing)</span>
+            </label>
+            <div class="relative">
+              <input
+                type="number"
+                name="{{ settings_form.default_reminder_days.html_name }}"
+                id="{{ settings_form.default_reminder_days.id_for_label }}"
+                value="{{ settings_form.default_reminder_days.value|default:3 }}"
+                min="0"
+                max="30"
+                class="w-full px-3 py-2.5 pr-16 rounded-lg border {% if settings_form.default_reminder_days.errors %}border-red-400 bg-red-50{% else %}border-gray-300{% endif %} text-gray-900 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+              />
+              <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-xs text-gray-400 pointer-events-none">days</span>
+            </div>
+            {% if settings_form.default_reminder_days.errors %}
+              <p class="mt-1 text-xs text-red-600">{{ settings_form.default_reminder_days.errors|join:", " }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Email Reminders -->
+          <div class="flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
+            <div class="flex items-center h-5 mt-0.5">
+              <input
+                type="checkbox"
+                name="{{ settings_form.email_reminders_enabled.html_name }}"
+                id="{{ settings_form.email_reminders_enabled.id_for_label }}"
+                {% if settings_form.email_reminders_enabled.value %}checked{% endif %}
+                class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+              />
+            </div>
+            <div>
+              <label for="{{ settings_form.email_reminders_enabled.id_for_label }}" class="text-sm font-medium text-gray-700 cursor-pointer">
+                Email reminders
+              </label>
+              <p class="text-xs text-gray-500 mt-0.5">Receive email notifications before subscriptions renew</p>
+            </div>
+          </div>
+
+          <!-- Theme -->
+          <div>
+            <label for="{{ settings_form.theme.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              Appearance
+            </label>
+            <div class="grid grid-cols-3 gap-2" x-data="{ theme: '{{ settings_form.theme.value|default:'system' }}' }">
+              {% for value, label in settings_form.theme.field.choices %}
+                <label
+                  class="relative flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 cursor-pointer transition"
+                  :class="theme === '{{ value }}' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 bg-white hover:border-gray-300'"
+                >
+                  <input
+                    type="radio"
+                    name="{{ settings_form.theme.html_name }}"
+                    value="{{ value }}"
+                    x-model="theme"
+                    class="sr-only"
+                  />
+                  {% if value == 'light' %}
+                    <svg class="w-5 h-5" :class="theme === 'light' ? 'text-indigo-600' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                  {% elif value == 'dark' %}
+                    <svg class="w-5 h-5" :class="theme === 'dark' ? 'text-indigo-600' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                  {% else %}
+                    <svg class="w-5 h-5" :class="theme === 'system' ? 'text-indigo-600' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                  {% endif %}
+                  <span class="text-xs font-medium" :class="theme === '{{ value }}' ? 'text-indigo-700' : 'text-gray-600'">{{ label }}</span>
+                </label>
+              {% endfor %}
+            </div>
+            {% if settings_form.theme.errors %}
+              <p class="mt-1 text-xs text-red-600">{{ settings_form.theme.errors|join:", " }}</p>
+            {% endif %}
+          </div>
+
+          <div class="pt-2 border-t border-gray-100">
+            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              Save Settings
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Danger Zone -->
+      <div class="mt-6 bg-white rounded-2xl border border-red-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-red-100 bg-red-50">
+          <div class="flex items-center gap-3">
+            <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-red-100 flex items-center justify-center">
+              <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-sm font-semibold text-red-800">Danger Zone</h2>
+              <p class="text-xs text-red-600">Irreversible actions</p>
+            </div>
+          </div>
+        </div>
+        <div class="px-6 py-5">
+          <p class="text-sm text-gray-600 mb-4">Once you delete your account, all of your data will be permanently removed. This action cannot be undone.</p>
+          <a
+            href="{% url 'accounts:delete' %}"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-red-300 bg-white hover:bg-red-50 text-red-700 text-sm font-medium shadow-sm transition focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+            Delete Account
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

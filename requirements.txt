@@ -1,0 +1,16 @@
+Django>=5.0,<6.0
+celery[redis]
+django-celery-beat
+redis
+pandas
+gunicorn
+whitenoise
+python-decouple
+psycopg2-binary
+django-axes
+pytest
+pytest-django
+pytest-cov
+ruff
+Pillow
+reportlab>=4.0,<6.0

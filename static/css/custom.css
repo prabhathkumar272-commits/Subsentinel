@@ -1,0 +1,413 @@
+/* ============================================================
+   SubSentinel — Custom CSS
+   Brand colors, glassmorphism, cards, scrollbars, animations
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   1. CSS Custom Properties (Brand Colors)
+   ---------------------------------------------------------- */
+:root {
+  /* Indigo brand palette */
+  --color-primary:        #6366f1;
+  --color-primary-dark:   #4f46e5;
+  --color-primary-light:  #818cf8;
+  --color-primary-50:     #eef2ff;
+  --color-primary-100:    #e0e7ff;
+  --color-primary-900:    #312e81;
+
+  /* Semantic colors */
+  --color-success:        #22c55e;
+  --color-success-bg:     #f0fdf4;
+  --color-warning:        #f59e0b;
+  --color-warning-bg:     #fffbeb;
+  --color-danger:         #ef4444;
+  --color-danger-bg:      #fef2f2;
+  --color-info:           #3b82f6;
+  --color-info-bg:        #eff6ff;
+
+  /* Neutrals */
+  --color-bg:             #f9fafb;
+  --color-surface:        #ffffff;
+  --color-border:         #e5e7eb;
+  --color-muted:          #9ca3af;
+  --color-text:           #111827;
+  --color-text-secondary: #4b5563;
+
+  /* Category colors */
+  --color-cat-streaming:  #ef4444;
+  --color-cat-saas:       #3b82f6;
+  --color-cat-fitness:    #22c55e;
+  --color-cat-news:       #f59e0b;
+  --color-cat-cloud:      #8b5cf6;
+  --color-cat-gaming:     #ec4899;
+  --color-cat-other:      #6b7280;
+
+  /* Spacing / Radius */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast:   150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow:   400ms ease;
+
+  /* Shadows */
+  --shadow-sm:  0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md:  0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg:  0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+  --shadow-xl:  0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+}
+
+/* ----------------------------------------------------------
+   2. Dark Mode Overrides
+   ---------------------------------------------------------- */
+.dark {
+  --color-bg:             #0f172a;
+  --color-surface:        #1e293b;
+  --color-border:         #334155;
+  --color-muted:          #64748b;
+  --color-text:           #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-primary-50:     rgba(99, 102, 241, 0.12);
+  --color-primary-100:    rgba(99, 102, 241, 0.2);
+}
+
+/* ----------------------------------------------------------
+   3. Glassmorphism
+   ---------------------------------------------------------- */
+.glassmorphism {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.dark .glassmorphism {
+  background: rgba(15, 23, 42, 0.5);
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+.glassmorphism-strong {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* ----------------------------------------------------------
+   4. Card Component
+   ---------------------------------------------------------- */
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-fast);
+}
+
+.card-hover:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.card-interactive {
+  cursor: pointer;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.card-interactive:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* ----------------------------------------------------------
+   5. Custom Scrollbar (WebKit)
+   ---------------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+/* ----------------------------------------------------------
+   6. Skeleton Loader
+   ---------------------------------------------------------- */
+@keyframes skeleton-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #e5e7eb 25%,
+    #f3f4f6 50%,
+    #e5e7eb 75%
+  );
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.5s infinite linear;
+  border-radius: var(--radius-md);
+}
+
+.dark .skeleton {
+  background: linear-gradient(
+    90deg,
+    #1e293b 25%,
+    #263148 50%,
+    #1e293b 75%
+  );
+  background-size: 800px 100%;
+}
+
+.skeleton-text {
+  height: 14px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+}
+
+.skeleton-text.w-3\/4 { width: 75%; }
+.skeleton-text.w-1\/2 { width: 50%; }
+.skeleton-text.w-full { width: 100%; }
+
+.skeleton-circle {
+  border-radius: 9999px;
+}
+
+/* ----------------------------------------------------------
+   7. Transition / Animation Utilities
+   ---------------------------------------------------------- */
+/* Fade in */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn var(--transition-normal) ease forwards;
+}
+
+/* Slide up */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slideUp var(--transition-normal) ease forwards;
+}
+
+/* Slide down */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-down {
+  animation: slideDown var(--transition-fast) ease forwards;
+}
+
+/* Scale in */
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.animate-scale-in {
+  animation: scaleIn var(--transition-fast) ease forwards;
+}
+
+/* Spin */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin 2s linear infinite;
+}
+
+/* Pulse */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* Bounce dot */
+@keyframes bounce-dot {
+  0%, 80%, 100% { transform: scale(0); }
+  40%           { transform: scale(1); }
+}
+
+.bounce-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: bounce-dot 1.4s ease-in-out infinite both;
+}
+.bounce-dot:nth-child(2) { animation-delay: 0.16s; }
+.bounce-dot:nth-child(3) { animation-delay: 0.32s; }
+
+/* ----------------------------------------------------------
+   8. Toast Notifications
+   ---------------------------------------------------------- */
+#toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 280px;
+  max-width: 380px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-xl);
+  pointer-events: all;
+  animation: slideUp 0.25s ease forwards;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toast.toast-hiding {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.toast-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.toast-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 2px;
+}
+
+.toast-message {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.toast-close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-muted);
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px;
+  margin-top: 1px;
+  transition: color var(--transition-fast);
+}
+
+.toast-close:hover {
+  color: var(--color-text);
+}
+
+/* Toast variants — left border accent */
+.toast-success  { border-left: 4px solid var(--color-success); }
+.toast-error    { border-left: 4px solid var(--color-danger); }
+.toast-warning  { border-left: 4px solid var(--color-warning); }
+.toast-info     { border-left: 4px solid var(--color-info); }
+
+/* Progress bar at bottom */
+.toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  transition: width linear;
+}
+
+.toast-success .toast-progress  { background: var(--color-success); }
+.toast-error   .toast-progress  { background: var(--color-danger); }
+.toast-warning .toast-progress  { background: var(--color-warning); }
+.toast-info    .toast-progress  { background: var(--color-info); }
+
+/* ----------------------------------------------------------
+   9. Misc Utilities
+   ---------------------------------------------------------- */
+/* Focus ring override */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Smooth color transitions for theme switching */
+html {
+  transition: background-color var(--transition-normal), color var(--transition-normal);
+}
+
+/* Prevent layout shift for Alpine x-cloak */
+[x-cloak] { display: none !important; }
+
+/* Thin divider */
+.divider-y {
+  border-top: 1px solid var(--color-border);
+}
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+}

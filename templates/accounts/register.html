@@ -1,0 +1,190 @@
+{% extends "base_auth.html" %}
+
+{% block auth_title %}Create your account{% endblock %}
+
+{% block auth_subtitle %}Start tracking your subscriptions today{% endblock %}
+
+{% block auth_form %}
+<form method="post" action="{% url 'accounts:register' %}" novalidate class="space-y-5">
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <div class="rounded-lg bg-red-50 border border-red-200 p-4">
+      <div class="flex items-start gap-3">
+        <svg class="w-5 h-5 text-red-500 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+        <ul class="text-sm text-red-700 space-y-1">
+          {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- First Name & Last Name -->
+  <div class="grid grid-cols-2 gap-4">
+    <div>
+      <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+        First name
+      </label>
+      <input
+        type="text"
+        name="{{ form.first_name.html_name }}"
+        id="{{ form.first_name.id_for_label }}"
+        value="{{ form.first_name.value|default:'' }}"
+        autocomplete="given-name"
+        placeholder="Jane"
+        class="w-full px-3 py-2.5 rounded-lg border {% if form.first_name.errors %}border-red-400 bg-red-50 focus:ring-red-400{% else %}border-gray-300 bg-white focus:ring-indigo-500{% endif %} text-gray-900 placeholder-gray-400 text-sm shadow-sm focus:outline-none focus:ring-2 focus:border-transparent transition"
+      />
+      {% if form.first_name.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ form.first_name.errors|join:", " }}</p>
+      {% endif %}
+    </div>
+
+    <div>
+      <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+        Last name
+      </label>
+      <input
+        type="text"
+        name="{{ form.last_name.html_name }}"
+        id="{{ form.last_name.id_for_label }}"
+        value="{{ form.last_name.value|default:'' }}"
+        autocomplete="family-name"
+        placeholder="Doe"
+        class="w-full px-3 py-2.5 rounded-lg border {% if form.last_name.errors %}border-red-400 bg-red-50 focus:ring-red-400{% else %}border-gray-300 bg-white focus:ring-indigo-500{% endif %} text-gray-900 placeholder-gray-400 text-sm shadow-sm focus:outline-none focus:ring-2 focus:border-transparent transition"
+      />
+      {% if form.last_name.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ form.last_name.errors|join:", " }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Email -->
+  <div>
+    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+      Email address
+    </label>
+    <div class="relative">
+      <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+        </svg>
+      </span>
+      <input
+        type="email"
+        name="{{ form.email.html_name }}"
+        id="{{ form.email.id_for_label }}"
+        value="{{ form.email.value|default:'' }}"
+        autocomplete="email"
+        placeholder="jane@example.com"
+        class="w-full pl-10 pr-3 py-2.5 rounded-lg border {% if form.email.errors %}border-red-400 bg-red-50 focus:ring-red-400{% else %}border-gray-300 bg-white focus:ring-indigo-500{% endif %} text-gray-900 placeholder-gray-400 text-sm shadow-sm focus:outline-none focus:ring-2 focus:border-transparent transition"
+      />
+    </div>
+    {% if form.email.errors %}
+      <p class="mt-1 text-xs text-red-600">{{ form.email.errors|join:", " }}</p>
+    {% endif %}
+  </div>
+
+  <!-- Password -->
+  <div>
+    <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+      Password
+    </label>
+    <div class="relative" x-data="{ show: false }">
+      <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+      </span>
+      <input
+        :type="show ? 'text' : 'password'"
+        name="{{ form.password1.html_name }}"
+        id="{{ form.password1.id_for_label }}"
+        autocomplete="new-password"
+        placeholder="At least 8 characters"
+        class="w-full pl-10 pr-10 py-2.5 rounded-lg border {% if form.password1.errors %}border-red-400 bg-red-50 focus:ring-red-400{% else %}border-gray-300 bg-white focus:ring-indigo-500{% endif %} text-gray-900 placeholder-gray-400 text-sm shadow-sm focus:outline-none focus:ring-2 focus:border-transparent transition"
+      />
+      <button type="button" @click="show = !show" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
+        <svg x-show="!show" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+        </svg>
+        <svg x-show="show" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+        </svg>
+      </button>
+    </div>
+    {% if form.password1.errors %}
+      <p class="mt-1 text-xs text-red-600">{{ form.password1.errors|join:", " }}</p>
+    {% endif %}
+    {% if form.password1.help_text %}
+      <p class="mt-1 text-xs text-gray-500">{{ form.password1.help_text }}</p>
+    {% endif %}
+  </div>
+
+  <!-- Confirm Password -->
+  <div>
+    <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+      Confirm password
+    </label>
+    <div class="relative" x-data="{ show: false }">
+      <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+        </svg>
+      </span>
+      <input
+        :type="show ? 'text' : 'password'"
+        name="{{ form.password2.html_name }}"
+        id="{{ form.password2.id_for_label }}"
+        autocomplete="new-password"
+        placeholder="Repeat your password"
+        class="w-full pl-10 pr-10 py-2.5 rounded-lg border {% if form.password2.errors %}border-red-400 bg-red-50 focus:ring-red-400{% else %}border-gray-300 bg-white focus:ring-indigo-500{% endif %} text-gray-900 placeholder-gray-400 text-sm shadow-sm focus:outline-none focus:ring-2 focus:border-transparent transition"
+      />
+      <button type="button" @click="show = !show" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
+        <svg x-show="!show" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+        </svg>
+        <svg x-show="show" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+        </svg>
+      </button>
+    </div>
+    {% if form.password2.errors %}
+      <p class="mt-1 text-xs text-red-600">{{ form.password2.errors|join:", " }}</p>
+    {% endif %}
+  </div>
+
+  <!-- Terms -->
+  <p class="text-xs text-gray-500 leading-relaxed">
+    By creating an account you agree to our
+    <a href="/terms/" class="text-indigo-600 hover:underline font-medium">Terms of Service</a>
+    and
+    <a href="/privacy/" class="text-indigo-600 hover:underline font-medium">Privacy Policy</a>.
+  </p>
+
+  <!-- Submit -->
+  <button
+    type="submit"
+    class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-semibold shadow-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+  >
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+    </svg>
+    Create Account
+  </button>
+</form>
+{% endblock %}
+
+{% block auth_footer %}
+  <p class="text-sm text-gray-600">
+    Already have an account?
+    <a href="{% url 'accounts:login' %}" class="font-semibold text-indigo-600 hover:text-indigo-500 transition">
+      Sign in
+    </a>
+  </p>
+{% endblock %}

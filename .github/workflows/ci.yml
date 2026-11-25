@@ -1,0 +1,56 @@
+# ---------------------------------------------------------------------------
+# SubSentinel – CI Pipeline
+# ---------------------------------------------------------------------------
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      SECRET_KEY: ci-test-secret-key
+      DEBUG: "True"
+
+    steps:
+      # ----- Checkout -----
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ----- Python -----
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      # ----- Dependencies -----
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # ----- Lint -----
+      - name: Run Ruff linter
+        run: ruff check . --output-format=github
+
+      # ----- Test -----
+      - name: Run tests with coverage
+        run: |
+          pytest --cov=apps --cov-report=term-missing --cov-report=xml
+
+      # ----- Upload coverage (optional) -----
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 14
