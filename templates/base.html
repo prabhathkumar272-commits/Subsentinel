@@ -1,7 +1,8 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en"
-      x-data="{ darkMode: localStorage.getItem('darkMode') === 'true', sidebarOpen: false, userMenuOpen: false, notificationOpen: false }"
+      data-theme-preference="{{ request.user.settings.theme|default:'system' }}"
+      x-data="{ darkMode: localStorage.getItem('darkMode') !== null ? localStorage.getItem('darkMode') === 'true' : (document.documentElement.dataset.themePreference === 'dark' || (document.documentElement.dataset.themePreference === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)), sidebarOpen: false, userMenuOpen: false, notificationOpen: false }"
       :class="{ 'dark': darkMode }"
       class="h-full">
 <head>
@@ -9,7 +10,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block page_title %}SubSentinel{% endblock %} — SubSentinel</title>
 
-  <!-- Google Fonts -->
+  <!-- Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -21,8 +22,8 @@
       theme: {
         extend: {
           colors: {
-            primary:  { DEFAULT: '#6366F1', 50: '#EEEEFF', 100: '#E0E0FD', 200: '#C2C3FB', 300: '#A5A6F9', 400: '#8789F7', 500: '#6366F1', 600: '#4145EE', 700: '#1F24EB', 800: '#1216C5', 900: '#0D109B' },
-            accent:   { DEFAULT: '#8B5CF6', 50: '#F5F0FE', 100: '#EBE2FD', 200: '#D6C5FB', 300: '#C2A8FA', 400: '#AD8BF8', 500: '#8B5CF6', 600: '#6D2FF4', 700: '#5212E0', 800: '#3F0DAD', 900: '#2C097A' },
+            primary:  { DEFAULT: '#62734B', 50: '#F0F2EB', 100: '#E3E8D9', 200: '#CAD4B9', 300: '#B0C098', 400: '#96A978', 500: '#62734B', 600: '#53623F', 700: '#465336', 800: '#39432D', 900: '#2B3323' },
+            accent:   { DEFAULT: '#B49B79', 50: '#F6F2EC', 100: '#ECE4D8', 200: '#D8C9B1', 300: '#C8B392', 400: '#BEA783', 500: '#B49B79', 600: '#9A805E', 700: '#806949', 800: '#665337', 900: '#4D3E29' },
             success:  { DEFAULT: '#10B981', 50: '#E8FBF4', 100: '#D1F7E9', 200: '#A3EFD3', 300: '#75E7BD', 400: '#47DFA7', 500: '#10B981', 600: '#0D9469', 700: '#0A6F4F', 800: '#074A35', 900: '#04251B' },
             warning:  { DEFAULT: '#F59E0B', 50: '#FFF8E8', 100: '#FFF1D1', 200: '#FFE3A3', 300: '#FFD575', 400: '#FFC747', 500: '#F59E0B', 600: '#C37E09', 700: '#915E07', 800: '#5F3E05', 900: '#2D1E02' },
             danger:   { DEFAULT: '#F43F5E', 50: '#FEE9ED', 100: '#FDD3DA', 200: '#FBA7B5', 300: '#F97B90', 400: '#F74F6B', 500: '#F43F5E', 600: '#F01038', 700: '#C00B2D', 800: '#900823', 900: '#600519' },
@@ -50,6 +51,8 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
+  <link rel="stylesheet" href="{% static 'css/custom.css' %}" />
+
   <style>
     /* ── Keyframes ──────────────────────────────────────────── */
     @keyframes fadeIn {
@@ -75,8 +78,8 @@
 
     /* ── CSS Custom Properties ──────────────────────────────── */
     :root {
-      --primary:  #6366F1;
-      --accent:   #8B5CF6;
+      --primary:  #62734B;
+      --accent:   #B49B79;
       --success:  #10B981;
       --warning:  #F59E0B;
       --danger:   #F43F5E;
@@ -206,7 +209,7 @@
   <!-- ═══════════════════════════════════════════════════════════
        WRAPPER
   ═══════════════════════════════════════════════════════════ -->
-  <div class="flex h-full min-h-screen">
+  <div class="min-h-screen">
 
     <!-- ── SIDEBAR OVERLAY (mobile) ───────────────────────── -->
     <div x-show="sidebarOpen"
@@ -224,7 +227,7 @@
     <!-- ── SIDEBAR ──────────────────────────────────────────── -->
     <aside id="sidebar"
            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
-           class="fixed top-0 left-0 h-full w-64 z-40 flex flex-col
+           class="hidden fixed top-0 left-0 h-full w-64 z-40 flex-col
                   bg-white dark:bg-slate-800
                   border-r border-slate-200 dark:border-slate-700
                   shadow-xl lg:shadow-none
@@ -309,25 +312,25 @@
     </aside>
 
     <!-- ── MAIN COLUMN ─────────────────────────────────────── -->
-    <div class="flex-1 flex flex-col min-h-screen lg:ml-64 transition-all duration-300">
+    <div class="flex min-h-screen flex-col">
 
       <!-- ── TOP NAVBAR ──────────────────────────────────────── -->
-      <header class="sticky top-0 z-20 flex items-center gap-4 px-4 md:px-6 py-3
-                     bg-white/80 dark:bg-slate-800/80
-                     backdrop-blur-md
-                     border-b border-slate-200 dark:border-slate-700
-                     shadow-sm">
+      <header class="app-header sticky top-0 z-20 flex items-center gap-4 px-4 md:px-8 py-4">
 
-        <!-- Hamburger (mobile) -->
-        <button @click="sidebarOpen = !sidebarOpen"
-                class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 lg:hidden transition-colors">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-          </svg>
-        </button>
+        <a href="{% url 'core:dashboard' %}" class="app-brand shrink-0" aria-label="SubSentinel home">
+          <span class="app-brand-mark">S</span>
+          <span>SubSentinel</span>
+        </a>
+
+        <nav class="app-nav hidden md:flex" aria-label="Main navigation">
+          <a href="{% url 'core:dashboard' %}" class="{% if request.path == '/dashboard/' %}active{% endif %}">Overview</a>
+          <a href="{% url 'subscriptions:list' %}" class="{% if '/subscriptions/' in request.path %}active{% endif %}">Subscriptions</a>
+          <a href="{% url 'imports:upload' %}" class="{% if '/imports/' in request.path %}active{% endif %}">Import</a>
+          <a href="{% url 'insights:calendar' %}" class="{% if '/insights/' in request.path %}active{% endif %}">Calendar</a>
+        </nav>
 
         <!-- Page title -->
-        <h1 class="text-lg font-bold text-slate-800 dark:text-slate-100 flex-1 truncate">
+        <h1 class="app-header-title text-sm font-medium text-slate-500 dark:text-slate-300 flex-1 truncate md:hidden">
           {% block page_title_header %}SubSentinel{% endblock %}
         </h1>
 
@@ -419,7 +422,7 @@
 
               <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-700">
                 <p class="text-xs text-slate-400 dark:text-slate-500">Signed in as</p>
-                <p class="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{{ request.user.username }}</p>
+                <p class="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{{ request.user.email }}</p>
               </div>
 
               <a href="/accounts/profile/"
@@ -432,14 +435,16 @@
               </a>
 
               <div class="border-t border-slate-100 dark:border-slate-700 mt-1">
-                <a href="/accounts/logout/"
-                   class="flex items-center gap-2 px-4 py-2.5 text-sm text-danger hover:bg-danger/5 transition-colors">
+                <form method="post" action="{% url 'accounts:logout' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-danger hover:bg-danger/5 transition-colors text-left">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                   </svg>
                   Sign Out
-                </a>
+                  </button>
+                </form>
               </div>
             </div>
           </div>
@@ -447,7 +452,7 @@
       </header>
 
       <!-- ── MAIN CONTENT ──────────────────────────────────── -->
-      <main class="flex-1 px-4 md:px-6 py-6 pb-24 lg:pb-6 overflow-x-hidden">
+      <main class="app-main flex-1 px-4 md:px-8 py-8 pb-24 lg:pb-10 overflow-x-hidden">
         {% block content %}{% endblock %}
       </main>
 

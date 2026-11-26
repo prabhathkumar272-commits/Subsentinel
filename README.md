@@ -8,20 +8,20 @@
 
 **SubSentinel** helps you track every subscription and free trial you own,
 so you never get surprised by an unexpected charge or miss the window to cancel a trial.
-Upload a bank statement, let the AI detect recurring charges automatically, then manage
-everything from a clean dashboard with renewal reminders delivered right to your inbox.
+Upload a bank statement and review recurring-charge candidates detected by a transparent,
+rule-based process, then manage everything from a dashboard with renewal reminders.
 
 ---
 
 ## ✨ Features
 
-- 🔍 **Smart bank-statement import** — CSV upload with AI-powered recurring-charge detection
+- 🔍 **Bank-statement import** — CSV parsing with rule-based recurring-charge detection and review
 - 📋 **Subscription management** — Add, edit, pause, or cancel any subscription
 - 🆓 **Trial tracker** — See exactly when each free trial expires before you're charged
 - 🔔 **Renewal reminders** — Email (and in-app) alerts N days before each billing date
 - 📊 **Rich dashboard** — Donut chart by category, 12-month spend trend, top-5 by cost
 - 💡 **Smart insights** — Idle subscriptions, duplicate services, potential savings
-- 📤 **CSV / PDF export** — Download a spreadsheet-ready CSV or a formatted subscription report
+- 📤 **CSV / PDF export** — Download spreadsheet-ready data or a formatted subscription report
 - 🌙 **Dark mode** — System-aware with manual toggle
 - 🔒 **Per-user data isolation** — All data scoped to the authenticated user
 - 📱 **Mobile-first responsive layout**
@@ -36,9 +36,9 @@ everything from a clean dashboard with renewal reminders delivered right to your
 | **Frontend**       | Tailwind CSS 3, HTMX 1, Alpine.js        |
 | **Database**       | PostgreSQL (prod) / SQLite (dev)         |
 | **Background Jobs**| Celery + Redis                           |
-| **Email**          | Django `send_mail` / SendGrid (prod)     |
-| **Data parsing**   | pandas, python-dateutil                  |
-| **Testing**        | pytest-django, pytest-cov, factory_boy   |
+| **Email**          | Django SMTP backend                       |
+| **Data parsing**   | pandas                                   |
+| **Testing**        | pytest-django, pytest-cov                |
 | **Containerization**| Docker + docker-compose                 |
 
 ---
@@ -49,7 +49,7 @@ everything from a clean dashboard with renewal reminders delivered right to your
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/yourname/subsentinel.git
+git clone https://github.com/prabhathkumar272-commits/Subsentinel.git
 cd subsentinel
 
 # 2. Copy env file and adjust as needed
@@ -104,13 +104,17 @@ python manage.py runserver
 | `SECRET_KEY`              | Django secret key                             | *(required)*     |
 | `DEBUG`                   | Enable debug mode                             | `True`           |
 | `ALLOWED_HOSTS`           | Comma-separated allowed host names            | `localhost`      |
-| `DATABASE_URL`            | Database connection string                    | SQLite (dev)     |
-| `REDIS_URL`               | Redis broker URL for Celery                   | `redis://localhost:6379/0` |
+| `DB_ENGINE`               | Django database backend                       | SQLite in base settings |
+| `DB_NAME`                 | Database name or SQLite file path             | `db.sqlite3`      |
+| `DB_USER`, `DB_PASSWORD`  | Database credentials                          | *(empty)*         |
+| `DB_HOST`, `DB_PORT`      | Database host and port                        | *(empty)*         |
+| `CELERY_BROKER_URL`       | Redis broker URL for Celery                   | `redis://localhost:6379/0` |
+| `CELERY_RESULT_BACKEND`   | Celery result backend                         | `redis://localhost:6379/0` |
 | `EMAIL_HOST`              | SMTP host                                     | `localhost`      |
 | `EMAIL_HOST_USER`         | SMTP username                                 | *(empty)*        |
 | `EMAIL_HOST_PASSWORD`     | SMTP password                                 | *(empty)*        |
 | `DEFAULT_FROM_EMAIL`      | Sender address for outgoing email             | `noreply@subsentinel.com` |
-| `SENDGRID_API_KEY`        | SendGrid key (optional, prod only)            | *(empty)*        |
+| `EMAIL_PORT`, `EMAIL_USE_TLS` | SMTP connection settings                  | `587`, `True`    |
 
 ---
 
@@ -196,10 +200,7 @@ subsentinel/
 │   ├── test_services.py
 │   ├── test_views.py
 │   └── test_tasks.py
-├── requirements/
-│   ├── base.txt
-│   ├── dev.txt
-│   └── prod.txt
+├── requirements.txt       # Runtime and development dependencies
 ├── docker-compose.yml
 ├── Dockerfile
 ├── manage.py

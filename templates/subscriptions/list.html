@@ -4,12 +4,13 @@
 {% block page_title %}Subscriptions{% endblock %}
 
 {% block content %}
-<div class="space-y-6" x-data="{ view: '{{ view_mode|default:'card' }}' }">
+<div class="app-subscriptions space-y-6" x-data="{ view: '{{ view_mode|default:'card' }}' }">
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Subscriptions</h1>
-      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage, monitor, and optimize your recurring expenses</p>
+      <p class="app-section-label mb-2">Your portfolio</p>
+      <h1 class="font-normal" style="font-family:Georgia,serif;font-size:clamp(36px,5vw,58px);">Subscriptions</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">All your recurring services, organized in one calm place.</p>
     </div>
     <div class="flex items-center gap-3">
       <!-- View toggle -->

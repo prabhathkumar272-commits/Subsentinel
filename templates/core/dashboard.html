@@ -47,38 +47,32 @@
 {% endblock %}
 
 {% block content %}
+<div class="app-dashboard">
 <!-- Chart data injected from context -->
 <script id="chartData" type="application/json">{{ chart_data|safe }}</script>
 
 <!-- ════════════════════════════════════════════════════════════
      HEADER ROW
 ════════════════════════════════════════════════════════════ -->
-<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+<div class="dashboard-intro flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-5">
   <div>
-    <h2 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-      Good {% now "G" as hour %}{% if hour < 12 %}morning{% elif hour < 18 %}afternoon{% else %}evening{% endif %},
-      {{ request.user.first_name|default:request.user.username }}! 👋
-    </h2>
-    <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm">
-      Here's a snapshot of your subscriptions as of {% now "N j, Y" %}.
-    </p>
+    <p class="dashboard-kicker">Your recurring spend, in focus</p>
+    <h2 class="dashboard-title">A clearer view<br class="hidden sm:block"> of what you pay for.</h2>
+    <p class="dashboard-subtitle">Good {% now "G" as hour %}{% if hour < 12 %}morning{% elif hour < 18 %}afternoon{% else %}evening{% endif %}, {{ request.user.first_name|default:request.user.email }}. Your subscription snapshot for {% now "F j, Y" %} is ready.</p>
   </div>
   <a href="{% url 'subscriptions:create' %}"
-     class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl
-            bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-semibold text-sm
-            shadow-lg shadow-indigo-500/30 hover:from-indigo-400 hover:to-violet-500 hover:scale-105
-            transition-all duration-200">
+     class="inline-flex shrink-0 items-center gap-2 px-5 py-3 rounded-full bg-primary text-white font-semibold text-sm shadow-sm hover:bg-primary-700 hover:-translate-y-0.5 transition-all duration-200">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
     </svg>
-    Add Subscription
+    Add a subscription
   </a>
 </div>
 
 <!-- ════════════════════════════════════════════════════════════
      STAT CARDS (4 up)
 ════════════════════════════════════════════════════════════ -->
-<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
 
   <!-- Monthly Spend -->
   <div class="stat-card rounded-3xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm relative overflow-hidden">
@@ -740,4 +734,5 @@
 
 })();
 </script>
+</div>
 {% endblock %}
