@@ -1,0 +1,24 @@
+# Secrets and local environment files
+.env*
+
+# Local databases, logs, generated files, and coverage
+db.sqlite3*
+logs/
+media/
+staticfiles/
+.coverage*
+coverage.xml
+htmlcov/
+
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Git metadata and local tooling
+.git/
+.idea/
+.vscode/
