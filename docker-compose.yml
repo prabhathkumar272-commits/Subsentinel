@@ -5,27 +5,35 @@ version: "3.9"
 
 x-common-env: &common-env
   DJANGO_SETTINGS_MODULE: config.settings.prod
-  SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+  SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
   DEBUG: "False"
-  ALLOWED_HOSTS: "localhost,127.0.0.1"
-  # Compose is also used for local HTTP demos; set both values in .env when
-  # deploying behind a TLS-terminating proxy.
+  ALLOWED_HOSTS: ${ALLOWED_HOSTS:?Set ALLOWED_HOSTS in .env}
+  CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:?Set CSRF_TRUSTED_ORIGINS in .env}
+  # Local HTTP defaults are supplied by .env.example; enable these behind TLS.
   SECURE_SSL_REDIRECT: "${SECURE_SSL_REDIRECT:-False}"
   SECURE_HSTS_SECONDS: "${SECURE_HSTS_SECONDS:-0}"
-  DB_NAME: subsentinel
-  DB_USER: postgres
-  DB_PASSWORD: postgres
-  DB_HOST: db
-  DB_PORT: "5432"
+  SESSION_COOKIE_SECURE: "${SESSION_COOKIE_SECURE:-False}"
+  CSRF_COOKIE_SECURE: "${CSRF_COOKIE_SECURE:-False}"
+  DB_NAME: ${DB_NAME:-subsentinel}
+  DB_USER: ${DB_USER:-postgres}
+  DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+  DB_HOST: ${DB_HOST:-db}
+  DB_PORT: ${DB_PORT:-5432}
   CELERY_BROKER_URL: redis://redis:6379/0
   CELERY_RESULT_BACKEND: redis://redis:6379/0
+  EMAIL_HOST: ${EMAIL_HOST:?Set EMAIL_HOST in .env}
+  EMAIL_PORT: ${EMAIL_PORT:-587}
+  EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+  EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+  EMAIL_USE_TLS: "${EMAIL_USE_TLS:-True}"
+  DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-noreply@subsentinel.com}
 
 services:
   # ---------- Web application ----------
   web:
     build: .
     ports:
-      - "8000:8000"
+      - "${APP_BIND_ADDRESS:-0.0.0.0}:${APP_PORT:-8000}:8000"
     environment:
       <<: *common-env
     depends_on:
@@ -42,15 +50,13 @@ services:
   db:
     image: postgres:15
     environment:
-      POSTGRES_DB: subsentinel
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${DB_NAME:-subsentinel}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -59,8 +65,6 @@ services:
   # ---------- Redis ----------
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:

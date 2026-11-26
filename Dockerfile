@@ -30,9 +30,15 @@ RUN mkdir -p /app/staticfiles /app/media /app/logs
 
 # Collect static files
 RUN DJANGO_SETTINGS_MODULE=config.settings.prod \
-    SECRET_KEY=build-only-placeholder \
+    SECRET_KEY=build-only-placeholder-build-only-placeholder-1234567890 \
+    ALLOWED_HOSTS=localhost \
+    CSRF_TRUSTED_ORIGINS=https://localhost \
+    DB_NAME=build \
+    DB_USER=build \
     DB_PASSWORD=build-only \
-    python manage.py collectstatic --noinput 2>/dev/null || true
+    DB_HOST=localhost \
+    EMAIL_HOST=localhost \
+    python manage.py collectstatic --noinput
 
 # Non-root user for security
 RUN addgroup --system app && \

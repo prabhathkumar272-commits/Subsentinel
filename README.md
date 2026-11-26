@@ -45,26 +45,51 @@ rule-based process, then manage everything from a dashboard with renewal reminde
 
 ## 🚀 Quick Start
 
-### Docker (recommended)
+### Docker (local demo)
 
 ```bash
 # 1. Clone the repo
 git clone https://github.com/prabhathkumar272-commits/Subsentinel.git
 cd subsentinel
 
-# 2. Copy env file and adjust as needed
+# 2. Copy env file, generate a secret key, and set DB_PASSWORD
 cp .env.example .env
+# Generate a key with:
+python -c "import secrets; print(secrets.token_urlsafe(64))"
+# Paste it into SECRET_KEY in .env. Replace the sample DB password as well.
 
 # 3. Build and start all services
 docker-compose up --build
 
-# 4. In a second terminal, run migrations and seed demo data
+# 4. In a second terminal, migrate and seed local demo data
 docker-compose exec web python manage.py migrate
 docker-compose exec web python manage.py seed_categories
 docker-compose exec web python manage.py seed_demo
 ```
 
 Open **http://localhost:8000** and log in with `demo@subsentinel.com` / `demo1234!`.
+The demo seed is for local development only. Do not run `seed_demo` on a public deployment.
+
+### Live deployment checklist
+
+The Compose file provides the Django app, PostgreSQL, Redis, Celery worker, and Celery Beat.
+Before deploying, set a unique `SECRET_KEY`, a strong `DB_PASSWORD`, your real
+`ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS`, and valid SMTP credentials in the hosting
+platform's secret/environment settings. Enable `SECURE_SSL_REDIRECT`,
+`SESSION_COOKIE_SECURE`, and `CSRF_COOKIE_SECURE`; set `SECURE_HSTS_SECONDS` only after
+HTTPS has been verified. Point DNS at your hosting platform or TLS-enabled reverse proxy
+and route requests to the app port. Set `APP_BIND_ADDRESS=127.0.0.1` when the proxy runs
+on the same host; use the platform's required bind address otherwise. PostgreSQL and
+Redis are not published publicly.
+
+Apply migrations as a deployment step before serving traffic:
+
+```bash
+docker compose run --rm web python manage.py migrate
+```
+
+Do not seed demo users or rely on the sample SMTP values in production. Configure and
+test real email delivery, backups, and monitoring in the hosting platform.
 
 ---
 
@@ -80,6 +105,8 @@ pip install -r requirements.txt
 
 # 3. Set environment variables (copy and edit)
 cp .env.example .env
+# Generate a key with `python -c "import secrets; print(secrets.token_urlsafe(64))"`
+# and paste it into SECRET_KEY in .env.
 
 # 4. Run database migrations
 python manage.py migrate
@@ -115,6 +142,9 @@ python manage.py runserver
 | `EMAIL_HOST_PASSWORD`     | SMTP password                                 | *(empty)*        |
 | `DEFAULT_FROM_EMAIL`      | Sender address for outgoing email             | `noreply@subsentinel.com` |
 | `EMAIL_PORT`, `EMAIL_USE_TLS` | SMTP connection settings                  | `587`, `True`    |
+| `CSRF_TRUSTED_ORIGINS`    | Comma-separated origins including scheme      | Set for your domain |
+| `SECURE_SSL_REDIRECT`     | Redirect HTTP to HTTPS in production          | `True` in prod settings |
+| `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE` | Send cookies over HTTPS only | `True` in prod settings |
 
 ---
 
