@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import pytest
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -89,9 +91,97 @@ class TestSubscriptionViews:
         # 302 = successful redirect after creation; 200 = form errors (also acceptable path)
         assert response.status_code in [200, 302]
 
+    def test_subscription_create_defaults_to_user_currency(self, auth_client, user):
+        user.settings.default_currency = 'INR'
+        user.settings.save(update_fields=['default_currency'])
+        response = auth_client.get('/subscriptions/create/')
+        assert response.status_code == 200
+        assert response.context['form'].initial['currency'] == 'INR'
+
     def test_subscription_detail_own(self, auth_client, subscription):
         response = auth_client.get(f'/subscriptions/{subscription.id}/')
         assert response.status_code == 200
+
+    def test_expected_payment_can_only_be_confirmed_by_its_owner(self, auth_client, user, other_user, subscription):
+        from apps.subscriptions.models import PaymentRecord, PaymentStatus
+
+        expected = PaymentRecord.objects.create(
+            subscription=subscription,
+            amount=subscription.amount,
+            date=subscription.next_billing_date,
+            status=PaymentStatus.EXPECTED,
+            notes='Expected renewal',
+        )
+        url = f'/subscriptions/payments/{expected.pk}/confirm/'
+        detail = auth_client.get(f'/subscriptions/{subscription.pk}/')
+        assert b'Confirm paid' in detail.content
+        assert auth_client.get(url).status_code == 405
+        response = auth_client.post(url)
+        assert response.status_code == 302
+        expected.refresh_from_db()
+        assert expected.status == PaymentStatus.CONFIRMED
+        assert expected.confirmed_at is not None
+        assert b'Confirmed' in auth_client.get(f'/subscriptions/{subscription.pk}/').content
+
+        # Confirmation is idempotent and cannot be used to access another user's record.
+        auth_client.post(url)
+        assert PaymentRecord.objects.filter(subscription=subscription).count() == 1
+        from django.test import Client
+
+        other_client = Client()
+        other_client.force_login(other_user)
+        assert other_client.post(url).status_code == 404
+
+    def test_dashboard_displays_currency_totals_separately_and_isolates_users(
+        self, auth_client, subscription, user, other_user, category
+    ):
+        import json
+
+        from django.utils import timezone
+
+        from apps.subscriptions.models import PaymentRecord, PaymentStatus, Subscription
+
+        Subscription.objects.create(
+            user=user,
+            name='INR service',
+            category=category,
+            amount='100.00',
+            currency='INR',
+            billing_cycle='monthly',
+            start_date=subscription.start_date,
+            next_billing_date=subscription.next_billing_date,
+        )
+        Subscription.objects.create(
+            user=other_user,
+            name='Private foreign service',
+            category=category,
+            amount='999.00',
+            currency='USD',
+            billing_cycle='monthly',
+            start_date=subscription.start_date,
+            next_billing_date=subscription.next_billing_date,
+        )
+        PaymentRecord.objects.create(
+            subscription=subscription,
+            amount='4.00',
+            date=timezone.localdate(),
+            status=PaymentStatus.CONFIRMED,
+        )
+        PaymentRecord.objects.create(
+            subscription=subscription,
+            amount='99.00',
+            date=subscription.next_billing_date,
+            status=PaymentStatus.EXPECTED,
+        )
+        response = auth_client.get('/dashboard/')
+        totals = {row['currency']: row for row in response.context['currency_totals']}
+        chart_data = json.loads(response.context['chart_data'])
+        assert totals['USD']['monthly'] == subscription.monthly_cost
+        assert totals['INR']['monthly'] == Decimal('100.00')
+        assert chart_data['currency'] == user.settings.default_currency
+        assert 'category_labels' in chart_data
+        assert chart_data['category_amounts'] == [float(subscription.monthly_cost)]
+        assert chart_data['trend_amounts'][-1] == 4.0
 
     def test_subscription_permission(self, auth_client, other_user, category, db):
         from datetime import date, timedelta
@@ -227,6 +317,8 @@ class TestImportWorkflow:
     def test_confirm_is_post_only_and_idempotent(self, auth_client, user):
         from apps.imports.models import CandidateStatus, DetectedCandidate, StatementUpload
         upload = StatementUpload.objects.create(user=user, file_name='statement.csv')
+        user.settings.default_currency = 'INR'
+        user.settings.save(update_fields=['default_currency'])
         candidate = DetectedCandidate.objects.create(
             upload=upload, merchant_name='Streamflix', normalized_name='streamflix',
             amount='12.99', interval='monthly', confidence=90,
@@ -237,6 +329,7 @@ class TestImportWorkflow:
         assert b'Added' in response.content
         assert auth_client.post(f'/imports/confirm/{candidate.pk}/').status_code == 302
         assert user.subscriptions.count() == 1
+        assert user.subscriptions.get().currency == 'INR'
         candidate.refresh_from_db()
         assert candidate.status == CandidateStatus.CONFIRMED
 

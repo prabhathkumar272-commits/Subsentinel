@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static core_tags %}
 
 {% block page_title %}Dashboard{% endblock %}
 
@@ -86,13 +86,15 @@
       </div>
       <span class="text-xs font-medium text-indigo-500 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/40 px-2.5 py-1 rounded-full">Monthly</span>
     </div>
-    <p class="text-sm text-slate-500 dark:text-slate-400 font-medium mb-1">Total Monthly Spend</p>
-    <p class="text-3xl font-black text-slate-900 dark:text-white stat-value"
-       data-countup="{{ monthly_total|default:'0' }}"
-       data-prefix="\$">
-      \${{ monthly_total|default:"0.00" }}
-    </p>
-    <p class="text-xs text-slate-400 dark:text-slate-500 mt-2">Across all active subscriptions</p>
+    <p class="text-sm text-slate-500 dark:text-slate-400 font-medium mb-1">Estimated Monthly Spend</p>
+    <div class="space-y-1">
+      {% for total in currency_totals %}
+      <p class="text-2xl font-black text-slate-900 dark:text-white stat-value">
+        {{ total.monthly|format_money:total.currency }}
+      </p>
+      {% endfor %}
+    </div>
+    <p class="text-xs text-slate-400 dark:text-slate-500 mt-2">Shown separately by currency</p>
   </div>
 
   <!-- Yearly Spend -->
@@ -107,13 +109,15 @@
       </div>
       <span class="text-xs font-medium text-violet-500 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/40 px-2.5 py-1 rounded-full">Yearly</span>
     </div>
-    <p class="text-sm text-slate-500 dark:text-slate-400 font-medium mb-1">Total Yearly Spend</p>
-    <p class="text-3xl font-black text-slate-900 dark:text-white stat-value"
-       data-countup="{{ yearly_total|default:'0' }}"
-       data-prefix="\$">
-      \${{ yearly_total|default:"0.00" }}
-    </p>
-    <p class="text-xs text-slate-400 dark:text-slate-500 mt-2">Annualised from monthly rates</p>
+    <p class="text-sm text-slate-500 dark:text-slate-400 font-medium mb-1">Estimated Yearly Spend</p>
+    <div class="space-y-1">
+      {% for total in currency_totals %}
+      <p class="text-2xl font-black text-slate-900 dark:text-white stat-value">
+        {{ total.yearly|format_money:total.currency }}
+      </p>
+      {% endfor %}
+    </div>
+    <p class="text-xs text-slate-400 dark:text-slate-500 mt-2">Annualized, separated by currency</p>
   </div>
 
   <!-- Active Subscriptions -->
@@ -168,7 +172,7 @@
     <div class="flex items-center justify-between mb-5">
       <div>
         <h3 class="text-base font-bold text-slate-900 dark:text-white">Spend by Category</h3>
-        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Monthly distribution</p>
+        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Monthly distribution · {{ display_currency }}</p>
       </div>
       <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center">
         <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -187,7 +191,7 @@
     <div class="flex items-center justify-between mb-5">
       <div>
         <h3 class="text-base font-bold text-slate-900 dark:text-white">Monthly Spend Trend</h3>
-        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Last 12 months</p>
+        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Confirmed payments · {{ display_currency }} · last 12 months</p>
       </div>
       <div class="w-9 h-9 rounded-xl bg-violet-50 dark:bg-violet-900/30 flex items-center justify-center">
         <svg class="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -205,7 +209,7 @@
     <div class="flex items-center justify-between mb-5">
       <div>
         <h3 class="text-base font-bold text-slate-900 dark:text-white">Upcoming Renewals</h3>
-        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Next 30 days</p>
+        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Monthly equivalents · {{ display_currency }} · next 30 days</p>
       </div>
       <div class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
         <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -223,7 +227,7 @@
     <div class="flex items-center justify-between mb-5">
       <div>
         <h3 class="text-base font-bold text-slate-900 dark:text-white">Top 5 Most Expensive</h3>
-        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Monthly amount</p>
+        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Monthly equivalent · {{ display_currency }}</p>
       </div>
       <div class="w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center">
         <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -258,7 +262,7 @@
           <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{{ insight.description }}</p>
           {% if insight.saving %}
           <p class="text-xs font-bold text-emerald-500 mt-1.5">
-            💰 Potential saving: {{ insight.saving }}
+          💰 Potential saving: {{ insight.saving|format_money:insight.currency }}
           </p>
           {% endif %}
         </div>
@@ -296,7 +300,7 @@
           </p>
         </div>
         <div class="text-right flex-shrink-0">
-          <p class="text-sm font-bold text-slate-800 dark:text-slate-100">\${{ sub.amount }}</p>
+          <p class="text-sm font-bold text-slate-800 dark:text-slate-100">{{ sub.currency }} {{ sub.amount|floatformat:2 }}</p>
           <span class="text-xs font-medium
             {% if sub.days_until_billing <= 3 %}text-danger dark:text-red-400
             {% elif sub.days_until_billing <= 7 %}text-warning dark:text-yellow-400
@@ -348,7 +352,7 @@
               {% elif sub.days_until_billing == 1 %}1 day
               {% else %}{{ sub.days_until_billing }} days{% endif %}
             </p>
-            <p class="text-xs text-slate-400 dark:text-slate-500">\${{ sub.amount }}/mo</p>
+            <p class="text-xs text-slate-400 dark:text-slate-500">{{ sub.currency }} {{ sub.monthly_cost|floatformat:2 }}/mo</p>
           </div>
         </div>
       </a>
@@ -392,6 +396,7 @@
     '#F59E0B', '#10B981', '#06B6D4', '#3B82F6',
     '#84CC16', '#F97316', '#A78BFA', '#34D399',
   ];
+  const CURRENCY = chartData.currency || 'USD';
 
   function textColor()   { return isDark() ? '#94a3b8' : '#64748b'; }
   function gridColor()   { return isDark() ? 'rgba(148,163,184,0.12)' : 'rgba(100,116,139,0.1)'; }
@@ -429,7 +434,7 @@
           callbacks: {
             label: function(ctx) {
               const val = ctx.parsed.y ?? ctx.parsed ?? ctx.raw;
-              if (typeof val === 'number') return ' $' + val.toFixed(2);
+              if (typeof val === 'number') return ` ${CURRENCY} ${val.toFixed(2)}`;
               return ' ' + val;
             }
           }
@@ -437,7 +442,7 @@
       },
       scales: {
         x: { ticks: { color: textColor() }, grid: { color: gridColor() } },
-        y: { ticks: { color: textColor(), callback: v => '$'+v }, grid: { color: gridColor() } },
+        y: { ticks: { color: textColor(), callback: v => CURRENCY + ' ' + v }, grid: { color: gridColor() } },
       }
     }, extra || {});
   }
@@ -456,7 +461,7 @@
         labels,
         datasets: [{
           data,
-          backgroundColor: PALETTE.slice(0, labels.length),
+          backgroundColor: chartData.category_colors || PALETTE.slice(0, labels.length),
           borderColor: isDark() ? '#1e293b' : '#fff',
           borderWidth: 3,
           hoverOffset: 8,
@@ -489,7 +494,7 @@
               label: function(ctx) {
                 const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
                 const pct   = ((ctx.parsed / total) * 100).toFixed(1);
-                return ` $${ctx.parsed.toFixed(2)} (${pct}%)`;
+                return ` ${CURRENCY} ${ctx.parsed.toFixed(2)} (${pct}%)`;
               }
             }
           }
@@ -544,6 +549,9 @@
             borderWidth: 1,
             padding: 10,
             cornerRadius: 10,
+            callbacks: {
+              label: ctx => `${ctx.dataset.label}: ${CURRENCY} ${Number(ctx.parsed.y).toFixed(2)}`
+            }
           }
         },
         scales: {
@@ -551,7 +559,7 @@
           y: {
             ticks: {
               color: textColor(),
-              callback: v => '$' + v
+              callback: v => CURRENCY + ' ' + v
             },
             grid: { color: gridColor() }
           }
@@ -574,7 +582,7 @@
       data: {
         labels,
         datasets: [{
-          label: 'Amount ($)',
+          label: `Amount (${CURRENCY})`,
           data,
           backgroundColor: data.map((_, i) => {
             const d = days[i] || 30;
@@ -615,7 +623,7 @@
         },
         scales: {
           x: {
-            ticks: { color: textColor(), callback: v => '$' + v },
+            ticks: { color: textColor(), callback: v => CURRENCY + ' ' + v },
             grid:  { color: gridColor() }
           },
           y: {
@@ -640,10 +648,10 @@
       data: {
         labels,
         datasets: [{
-          label: 'Monthly Cost ($)',
+          label: `Monthly Cost (${CURRENCY})`,
           data,
-          backgroundColor: PALETTE.slice(0, labels.length).map(c => c + 'CC'),
-          borderColor: PALETTE.slice(0, labels.length),
+          backgroundColor: (chartData.top_colors || PALETTE.slice(0, labels.length)).map(c => c + 'CC'),
+          borderColor: chartData.top_colors || PALETTE.slice(0, labels.length),
           borderWidth: 2,
           borderRadius: 8,
           borderSkipped: false,
@@ -668,7 +676,7 @@
             grid:  { display: false }
           },
           y: {
-            ticks: { color: textColor(), callback: v => '$' + v },
+            ticks: { color: textColor(), callback: v => CURRENCY + ' ' + v },
             grid:  { color: gridColor() }
           }
         }

@@ -54,3 +54,48 @@ jobs:
           name: coverage-report
           path: coverage.xml
           retention-days: 14
+
+  compose-smoke:
+    name: Docker Compose smoke test
+    runs-on: ubuntu-latest
+    env:
+      SECRET_KEY: ci-only-secret-key-not-for-production-0123456789-abcdefghijklmnopqrstuvwxyz
+      ALLOWED_HOSTS: localhost,127.0.0.1
+      CSRF_TRUSTED_ORIGINS: http://localhost:8000,http://127.0.0.1:8000
+      DB_PASSWORD: ci-only-password
+      ADMIN_EMAIL: ci@example.test
+      EMAIL_HOST: localhost
+      EMAIL_USE_TLS: "False"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start database and Redis
+        run: docker compose up --detach db redis
+
+      - name: Apply database migrations
+        run: docker compose run --rm web python manage.py migrate --noinput
+
+      - name: Start application and Celery services
+        run: docker compose up --build --detach
+
+      - name: Verify readiness and HTTP health
+        run: |
+          for attempt in $(seq 1 30); do
+            if docker compose exec -T web python manage.py check_runtime; then
+              break
+            fi
+            sleep 2
+          done
+          docker compose exec -T web python manage.py check_runtime
+          curl --fail --retry 10 --retry-delay 2 http://127.0.0.1:8000/health/live/
+          curl --fail --retry 10 --retry-delay 2 http://127.0.0.1:8000/health/ready/
+
+      - name: Show service state on failure
+        if: failure()
+        run: docker compose ps && docker compose logs --no-color
+
+      - name: Stop services
+        if: always()
+        run: docker compose down --volumes

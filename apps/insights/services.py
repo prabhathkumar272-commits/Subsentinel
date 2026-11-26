@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 from apps.subscriptions.models import (
     BillingCycle,
+    PaymentStatus,
     Subscription,
     SubscriptionStatus,
 )
@@ -25,7 +26,7 @@ if TYPE_CHECKING:
 
 
 def find_duplicate_services(user: User) -> list[dict[str, Any]]:
-    """Find subscriptions in the same category with similar names.
+    """Find subscriptions in the same category and currency with similar names.
 
     Uses :func:`difflib.SequenceMatcher` to compare names within each
     category. Pairs with a similarity ratio ≥ 0.6 are flagged.
@@ -47,7 +48,7 @@ def find_duplicate_services(user: User) -> list[dict[str, Any]]:
 
     for i, a in enumerate(subs):
         for b in subs[i + 1:]:
-            if a.category_id and a.category_id == b.category_id:
+            if a.category_id and a.category_id == b.category_id and a.currency == b.currency:
                 pair = (min(a.pk, b.pk), max(a.pk, b.pk))
                 if pair in seen_pairs:
                     continue
@@ -87,7 +88,12 @@ def detect_price_increases(user: User) -> list[dict[str, Any]]:
     subs = Subscription.objects.filter(user=user, status=SubscriptionStatus.ACTIVE)
 
     for sub in subs:
-        payments = list(sub.payments.order_by('-date')[:2])
+        payments = list(
+            sub.payments.filter(
+                status=PaymentStatus.CONFIRMED,
+                currency=sub.currency,
+            ).order_by('-date')[:2]
+        )
         if len(payments) == 2:
             newer, older = payments[0], payments[1]
             if newer.amount > older.amount:
@@ -96,6 +102,7 @@ def detect_price_increases(user: User) -> list[dict[str, Any]]:
                     'old_amount': older.amount,
                     'new_amount': newer.amount,
                     'increase': newer.amount - older.amount,
+                    'currency': sub.currency,
                 })
 
     return results
@@ -136,6 +143,7 @@ def suggest_annual_savings(user: User) -> list[dict[str, Any]]:
                 'current_yearly': current_yearly,
                 'estimated_yearly': estimated,
                 'saving': saving,
+                'currency': sub.currency,
             })
 
     return results
@@ -194,7 +202,7 @@ def get_all_insights(user: User) -> list[dict[str, Any]]:
         user: The subscription owner.
 
     Returns:
-        A flat list of insight dicts sorted by saving descending.
+        A flat list of insight dicts whose monetary values retain their currency.
     """
     insights: list[dict[str, Any]] = []
 
@@ -209,6 +217,7 @@ def get_all_insights(user: User) -> list[dict[str, Any]]:
                 f'({dup["similarity"]}% match). Consider keeping just one.'
             ),
             'saving': dup['potential_saving'],
+            'currency': dup['sub_a'].currency,
         })
 
     # Price increases
@@ -219,10 +228,11 @@ def get_all_insights(user: User) -> list[dict[str, Any]]:
             'title': 'Price increase detected',
             'description': (
                 f'"{inc["subscription"].name}" went from '
-                f'${inc["old_amount"]} to ${inc["new_amount"]} '
-                f'(+${inc["increase"]}).'
+                f'{inc["currency"]} {inc["old_amount"]} to {inc["currency"]} {inc["new_amount"]} '
+                f'(+{inc["currency"]} {inc["increase"]}).'
             ),
             'saving': None,
+            'currency': inc['currency'],
         })
 
     # Annual-plan savings
@@ -233,9 +243,10 @@ def get_all_insights(user: User) -> list[dict[str, Any]]:
             'title': 'Switch to annual',
             'description': (
                 f'Switching "{sav["subscription"].name}" to yearly billing '
-                f'could save ~${sav["saving"]}/year.'
+                f'could save ~{sav["currency"]} {sav["saving"]}/year.'
             ),
             'saving': sav['saving'],
+            'currency': sav['currency'],
         })
 
     # Unused
@@ -246,11 +257,12 @@ def get_all_insights(user: User) -> list[dict[str, Any]]:
             'title': 'Paused subscription',
             'description': (
                 f'"{unused["subscription"].name}" is paused. '
-                f'Cancel to save ${unused["monthly_cost"]}/mo.'
+                f'Cancel to save {unused["subscription"].currency} {unused["monthly_cost"]}/mo.'
             ),
             'saving': unused['monthly_cost'],
+            'currency': unused['subscription'].currency,
         })
 
-    # Sort by potential saving (nulls last)
-    insights.sort(key=lambda i: i['saving'] or Decimal('0'), reverse=True)
+    # Amounts in distinct currencies are not comparable, so preserve the
+    # insight groups instead of sorting mixed monetary values.
     return insights

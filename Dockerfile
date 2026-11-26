@@ -38,6 +38,7 @@ RUN DJANGO_SETTINGS_MODULE=config.settings.prod \
     DB_PASSWORD=build-only \
     DB_HOST=localhost \
     EMAIL_HOST=localhost \
+    ADMIN_EMAIL=admin@localhost \
     python manage.py collectstatic --noinput
 
 # Non-root user for security
@@ -50,10 +51,4 @@ USER app
 EXPOSE 8000
 
 # Start Gunicorn
-CMD ["gunicorn", \
-     "config.wsgi:application", \
-     "--bind", "0.0.0.0:8000", \
-     "--workers", "3", \
-     "--timeout", "120", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-"]
+CMD ["sh", "-c", "gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3 --timeout 120 --access-logfile - --error-logfile -"]

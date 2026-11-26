@@ -3,9 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from apps.subscriptions.forms import SubscriptionFilterForm, SubscriptionForm
-from apps.subscriptions.models import Subscription, SubscriptionStatus
+from apps.subscriptions.models import PaymentRecord, PaymentStatus, Subscription, SubscriptionStatus
 from apps.subscriptions.services import (
     export_subscriptions_csv,
     export_subscriptions_pdf,
@@ -56,7 +58,7 @@ def subscription_create(request):
             messages.success(request, f'"{subscription.name}" has been added.')
             return redirect('subscriptions:detail', pk=subscription.pk)
     else:
-        form = SubscriptionForm()
+        form = SubscriptionForm(initial={'currency': request.user.settings.default_currency})
 
     return render(request, 'subscriptions/create.html', {'form': form})
 
@@ -66,6 +68,21 @@ def subscription_detail(request, pk: int):
     """Display a single subscription's details."""
     subscription = get_object_or_404(Subscription, pk=pk, user=request.user)
     return render(request, 'subscriptions/detail.html', {'subscription': subscription})
+
+
+@login_required
+@require_POST
+def confirm_payment(request, pk: int):
+    """Confirm an expected renewal after the user verifies the charge."""
+    record = get_object_or_404(PaymentRecord, pk=pk, subscription__user=request.user)
+    if record.status == PaymentStatus.EXPECTED:
+        record.status = PaymentStatus.CONFIRMED
+        record.confirmed_at = timezone.now()
+        record.save(update_fields=['status', 'confirmed_at'])
+        messages.success(request, f'{record.subscription.name} renewal marked as paid.')
+    else:
+        messages.info(request, 'This renewal was already confirmed.')
+    return redirect('subscriptions:detail', pk=record.subscription_id)
 
 
 @login_required

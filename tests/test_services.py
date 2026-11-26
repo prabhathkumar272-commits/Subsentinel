@@ -94,6 +94,27 @@ class TestSubscriptionServices:
         total = calculate_yearly_total(user)
         assert total >= Decimal('15.99') * 12
 
+    def test_spending_totals_keep_currencies_separate(self, user, subscription, category):
+        from apps.subscriptions.models import Subscription
+        from apps.subscriptions.services import calculate_monthly_total, calculate_totals_by_currency
+
+        Subscription.objects.create(
+            user=user,
+            name='Indian service',
+            category=category,
+            amount='100.00',
+            currency='INR',
+            billing_cycle='monthly',
+            start_date=date.today(),
+            next_billing_date=date.today() + timedelta(days=10),
+        )
+
+        totals = {row['currency']: row for row in calculate_totals_by_currency(user)}
+        assert totals['USD']['monthly'] == Decimal('15.99')
+        assert totals['INR']['monthly'] == Decimal('100.00')
+        # Legacy single-total helpers now explicitly follow the user's currency.
+        assert calculate_monthly_total(user) == Decimal('15.99')
+
     def test_get_upcoming_renewals(self, user, subscription):
         from apps.subscriptions.services import get_upcoming_renewals
         renewals = get_upcoming_renewals(user, days=30)

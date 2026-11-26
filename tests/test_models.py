@@ -2,6 +2,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 import pytest
+from django.db import IntegrityError, transaction
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CustomUser
@@ -108,3 +109,22 @@ class TestCategory:
 
     def test_default_category_flag(self, category):
         assert category.is_default is True
+
+
+@pytest.mark.django_db
+def test_expected_renewal_has_database_idempotency_guard(subscription):
+    from apps.subscriptions.models import PaymentRecord, PaymentStatus
+
+    PaymentRecord.objects.create(
+        subscription=subscription,
+        amount=subscription.amount,
+        date=subscription.next_billing_date,
+        status=PaymentStatus.EXPECTED,
+    )
+    with pytest.raises(IntegrityError), transaction.atomic():
+        PaymentRecord.objects.create(
+            subscription=subscription,
+            amount=subscription.amount,
+            date=subscription.next_billing_date,
+            status=PaymentStatus.EXPECTED,
+        )

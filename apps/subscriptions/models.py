@@ -4,6 +4,8 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
+from django.utils import timezone
 
 
 class BillingCycle(models.TextChoices):
@@ -133,8 +135,13 @@ class Subscription(models.Model):
         if self.is_trial and not self.trial_end_date:
             raise ValidationError({'trial_end_date': 'Trial end date is required when the subscription is a trial.'})
 
+class PaymentStatus(models.TextChoices):
+    EXPECTED = 'expected', 'Expected'
+    CONFIRMED = 'confirmed', 'Confirmed'
+
+
 class PaymentRecord(models.Model):
-    """Historical record of a payment made for a subscription."""
+    """Expected renewal or confirmed payment, stored in its original currency."""
 
     subscription = models.ForeignKey(
         Subscription,
@@ -142,12 +149,38 @@ class PaymentRecord(models.Model):
         related_name='payments',
     )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=3, blank=True, default='')
     date = models.DateField()
+    status = models.CharField(
+        max_length=10,
+        choices=PaymentStatus.choices,
+        default=PaymentStatus.CONFIRMED,
+    )
+    confirmed_at = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-date']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['subscription', 'date'],
+                condition=Q(status=PaymentStatus.EXPECTED),
+                name='unique_expected_renewal_per_date',
+            ),
+        ]
 
     def __str__(self) -> str:
         return f'{self.subscription.name} – {self.amount} on {self.date}'
+
+    def save(self, *args, **kwargs):
+        if not self.currency:
+            self.currency = self.subscription.currency
+        if self.status == PaymentStatus.CONFIRMED and self.confirmed_at is None:
+            self.confirmed_at = timezone.now()
+        elif self.status == PaymentStatus.EXPECTED:
+            self.confirmed_at = None
+        update_fields = kwargs.get('update_fields')
+        if update_fields is not None:
+            kwargs['update_fields'] = set(update_fields) | {'currency', 'confirmed_at'}
+        super().save(*args, **kwargs)

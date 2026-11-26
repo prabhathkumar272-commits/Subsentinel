@@ -76,13 +76,39 @@ def get_user_subscriptions(user: User, filters: dict | None = None) -> QuerySet[
 
 
 def calculate_monthly_total(user: User) -> Decimal:
-    """Return the total estimated monthly spend for active subscriptions."""
-    subs = Subscription.objects.filter(user=user, status=SubscriptionStatus.ACTIVE)
+    """Return monthly spend in the user's selected currency only."""
+    currency = getattr(getattr(user, 'settings', None), 'default_currency', 'USD')
+    subs = Subscription.objects.filter(
+        user=user,
+        status=SubscriptionStatus.ACTIVE,
+        currency=currency,
+    )
     return sum((s.monthly_cost for s in subs), Decimal('0.00'))
 
 
+def calculate_totals_by_currency(user: User) -> list[dict[str, Decimal | str]]:
+    """Return active monthly and annual projections separately for each currency."""
+    totals: dict[str, Decimal] = {}
+    subs = Subscription.objects.filter(user=user, status=SubscriptionStatus.ACTIVE)
+    for sub in subs:
+        totals[sub.currency] = totals.get(sub.currency, Decimal('0.00')) + sub.monthly_cost
+
+    if not totals:
+        default_currency = getattr(getattr(user, 'settings', None), 'default_currency', 'USD')
+        totals[default_currency] = Decimal('0.00')
+
+    return [
+        {
+            'currency': currency,
+            'monthly': monthly.quantize(Decimal('0.01')),
+            'yearly': (monthly * 12).quantize(Decimal('0.01')),
+        }
+        for currency, monthly in sorted(totals.items())
+    ]
+
+
 def calculate_yearly_total(user: User) -> Decimal:
-    """Return the total estimated yearly spend for active subscriptions."""
+    """Return annualized spend in the user's selected currency only."""
     return (calculate_monthly_total(user) * 12).quantize(Decimal('0.01'))
 
 

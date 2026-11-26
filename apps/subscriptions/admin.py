@@ -30,8 +30,8 @@ class CategoryAdmin(admin.ModelAdmin):
 class PaymentRecordAdmin(admin.ModelAdmin):
     """Admin configuration for PaymentRecord."""
 
-    list_display = ('subscription', 'amount', 'date', 'created_at')
-    list_filter = ('date',)
+    list_display = ('subscription', 'amount', 'currency', 'status', 'date', 'confirmed_at')
+    list_filter = ('status', 'currency', 'date')
     search_fields = ('subscription__name',)
     date_hierarchy = 'date'
     raw_id_fields = ('subscription',)

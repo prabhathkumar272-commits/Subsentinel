@@ -1,0 +1,22 @@
+# Production HTTPS settings. Pair with a hosting platform or TLS reverse proxy.
+services:
+  web:
+    environment:
+      SECURE_SSL_REDIRECT: "True"
+      SESSION_COOKIE_SECURE: "True"
+      CSRF_COOKIE_SECURE: "True"
+      SECURE_HSTS_SECONDS: "${SECURE_HSTS_SECONDS:-31536000}"
+
+  celery-worker:
+    environment:
+      SECURE_SSL_REDIRECT: "True"
+      SESSION_COOKIE_SECURE: "True"
+      CSRF_COOKIE_SECURE: "True"
+      SECURE_HSTS_SECONDS: "${SECURE_HSTS_SECONDS:-31536000}"
+
+  celery-beat:
+    environment:
+      SECURE_SSL_REDIRECT: "True"
+      SESSION_COOKIE_SECURE: "True"
+      CSRF_COOKIE_SECURE: "True"
+      SECURE_HSTS_SECONDS: "${SECURE_HSTS_SECONDS:-31536000}"

@@ -151,9 +151,9 @@
   <!-- Payment History Table -->
   <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm overflow-hidden">
     <div class="p-5 border-b border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
-      <h2 class="text-base font-bold text-slate-900 dark:text-white">Payment History</h2>
+      <h2 class="text-base font-bold text-slate-900 dark:text-white">Payments &amp; Expected Renewals</h2>
       <span class="text-xs text-slate-500 dark:text-slate-400">
-        {{ subscription.payment_records.count }} recorded payments
+        {{ subscription.payments.count }} payment records
       </span>
     </div>
 
@@ -163,26 +163,35 @@
           <tr class="border-b border-slate-100 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-900/30 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             <th class="py-3 px-6">Date</th>
             <th class="py-3 px-6">Amount</th>
-            <th class="py-3 px-6">Notes</th>
+            <th class="py-3 px-6">Status / Notes</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 dark:divide-slate-700/60">
-          {% for record in subscription.payment_records.all %}
+          {% for record in subscription.payments.all %}
             <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/20 transition-colors">
               <td class="py-3 px-6 font-medium text-slate-800 dark:text-slate-200">
                 {{ record.date|date:"M d, Y" }}
               </td>
               <td class="py-3 px-6 font-semibold text-slate-900 dark:text-white">
-                {{ subscription.currency }} {{ record.amount }}
+                {{ record.currency }} {{ record.amount }}
               </td>
               <td class="py-3 px-6 text-slate-500 dark:text-slate-400">
-                {{ record.notes|default:"Automatic recurring billing" }}
+                {% if record.status == 'expected' %}
+                  <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">Expected</span>
+                  <form method="post" action="{% url 'subscriptions:confirm_payment' record.pk %}" class="mt-2">
+                    {% csrf_token %}
+                    <button type="submit" class="text-xs font-semibold text-primary hover:underline">Confirm paid</button>
+                  </form>
+                {% else %}
+                  <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Confirmed</span>
+                {% endif %}
+                {% if record.notes %}<p class="mt-1">{{ record.notes }}</p>{% endif %}
               </td>
             </tr>
           {% empty %}
             <tr>
               <td colspan="3" class="py-8 text-center text-slate-400">
-                No past payment records found for this subscription.
+                No payments or expected renewals found for this subscription.
               </td>
             </tr>
           {% endfor %}

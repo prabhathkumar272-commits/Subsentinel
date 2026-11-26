@@ -15,10 +15,11 @@ def format_money(value, currency='USD'):
         return value
     symbols = {
         'USD': '$', 'EUR': '€', 'GBP': '£',
-        'CAD': 'CA$', 'AUD': 'A$', 'INR': '₹',
+        'CAD': 'CA$', 'AUD': 'A$', 'INR': '₹', 'JPY': '¥',
     }
-    symbol = symbols.get(currency, '$')
-    return f'{symbol}{amount:,.2f}'
+    formatted = f'{amount:,.2f}'
+    symbol = symbols.get(currency)
+    return f'{symbol}{formatted}' if symbol else f'{currency} {formatted}'
 
 
 @register.filter

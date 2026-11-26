@@ -3,6 +3,7 @@ from datetime import date
 import pytest
 from django.core.management import call_command
 from django.template import Context, Template
+from django.test import Client
 
 
 @pytest.mark.django_db
@@ -48,3 +49,16 @@ def test_core_template_tags_format_values_and_handle_invalid_input():
 
     invalid_template = Template('{% load core_tags %}{{ value|days_color }}')
     assert invalid_template.render(Context({'value': 'not-a-number'})) == 'text-gray-400'
+
+
+@pytest.mark.django_db
+def test_health_endpoints_and_runtime_check():
+    client = Client()
+    assert client.get('/health/live/').status_code == 200
+    ready = client.get('/health/ready/')
+    assert ready.status_code == 200
+    assert ready.json() == {
+        'status': 'ok',
+        'checks': {'database': True, 'migrations': True, 'cache': True},
+    }
+    call_command('check_runtime', verbosity=0)

@@ -39,6 +39,7 @@ DATABASES = {
         "CONN_MAX_AGE": 600,
         "OPTIONS": {
             "connect_timeout": 10,
+            "sslmode": config("DB_SSLMODE", default="prefer"),
         },
     }
 }
@@ -53,6 +54,7 @@ SECURE_HSTS_PRELOAD = True
 SESSION_COOKIE_SECURE = config("SESSION_COOKIE_SECURE", default=True, cast=bool)
 CSRF_COOKIE_SECURE = config("CSRF_COOKIE_SECURE", default=True, cast=bool)
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_REDIRECT_EXEMPT = [r"^health/live/$", r"^health/ready/$"]
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = "DENY"
@@ -66,6 +68,8 @@ EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
+admin_email = config("ADMIN_EMAIL")
+ADMINS = [("SubSentinel administrator", admin_email)]
 
 # ---------------------------------------------------------------------------
 # Static files – WhiteNoise with compression + caching
@@ -91,6 +95,26 @@ CACHES = {
 # ---------------------------------------------------------------------------
 LOGGING["loggers"]["django"]["level"] = "WARNING"  # noqa: F405
 LOGGING["loggers"]["apps"]["level"] = "INFO"  # noqa: F405
+LOGGING["handlers"]["console"] = {  # noqa: F405
+    "class": "logging.StreamHandler",
+    "level": "INFO",
+    "formatter": "verbose",
+}
+LOGGING["loggers"]["django"] = {  # noqa: F405
+    "handlers": ["console"],
+    "level": "WARNING",
+    "propagate": False,
+}
+LOGGING["loggers"]["django.request"] = {  # noqa: F405
+    "handlers": ["console", "mail_admins"],
+    "level": "ERROR",
+    "propagate": False,
+}
+LOGGING["loggers"]["apps"] = {  # noqa: F405
+    "handlers": ["console", "mail_admins"],
+    "level": "INFO",
+    "propagate": False,
+}
 
 # ---------------------------------------------------------------------------
 # CSRF trusted origins

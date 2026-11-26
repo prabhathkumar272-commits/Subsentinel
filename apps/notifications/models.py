@@ -60,6 +60,7 @@ class ReminderLog(models.Model):
     reminder_date = models.DateField()
     reminder_type = models.CharField(max_length=10, choices=ReminderType.choices)
     sent_at = models.DateTimeField(auto_now_add=True)
+    email_sent_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = ['subscription', 'reminder_date', 'reminder_type']
